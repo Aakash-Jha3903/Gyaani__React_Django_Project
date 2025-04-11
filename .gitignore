@@ -1,0 +1,21 @@
+# Ignore SQLite DB
+backend/db.sqlite3
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Django secret files
+backend/.env
+
+# Node modules
+frontend/node_modules/
+
+# React env
+frontend/.env
+
+# Vite build
+frontend/dist/
+
+# VSCode settings (optional)
+.vscode/
