@@ -1,1 +1,3 @@
 vir_gyaani/
+.env
+db.sqlite3
