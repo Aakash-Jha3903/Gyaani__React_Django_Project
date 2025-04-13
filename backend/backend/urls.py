@@ -35,7 +35,6 @@ schema_view = get_schema_view(
         description="This is the documentation for the backend API",
         terms_of_service="http://mywbsite.com/policies/",
         contact=openapi.Contact(email=env("email")),
-        # contact=openapi.Contact(email="desphixs@gmail.com"),
         license=openapi.License(name="BSD Licence"),
     ),
     public=True,
