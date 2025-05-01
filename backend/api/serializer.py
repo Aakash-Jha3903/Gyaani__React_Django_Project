@@ -136,7 +136,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True)
-    
+    category = serializers.StringRelatedField()  # Include category title
+
     class Meta:
         model = api_models.Post
         fields = "__all__"
@@ -148,6 +149,12 @@ class PostSerializer(serializers.ModelSerializer):
             self.Meta.depth = 0
         else:
             self.Meta.depth = 3
+    
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image:
+            return request.build_absolute_uri(obj.image.url)
+        return None
 
 
 

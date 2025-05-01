@@ -17,8 +17,11 @@ urlpatterns = [
     path('post/lists/', api_views.PostListAPIView.as_view()),
     path('post/detail/<slug>/', api_views.PostDetailAPIView.as_view()),
     path('post/like-post/', api_views.LikePostAPIView.as_view()),
-    path('post/comment-post/', api_views.PostCommentAPIView.as_view()),
+    path('post/bookmark-details/<post_id>', api_views.BookmarkDetailsAPIView.as_view()),
     path('post/bookmark-post/', api_views.BookmarkPostAPIView.as_view()),
+    path('post/comment-post/', api_views.PostCommentAPIView.as_view()),
+    path("search-posts/", api_views.SearchPostsAPIView.as_view(), name="search-posts"),
+
 
     # Dashboard APIS
     path('author/dashboard/stats/<user_id>/', api_views.DashboardStats.as_view()),
@@ -29,5 +32,6 @@ urlpatterns = [
     path('author/dashboard/reply-comment/', api_views.DashboardPostCommentAPIView.as_view()),
     path('author/dashboard/post-create/', api_views.DashboardPostCreateAPIView.as_view()),
     path('author/dashboard/post-detail/<user_id>/<post_id>/', api_views.DashboardPostEditAPIView.as_view()),
+    path('author/dashboard/post-delete/<post_id>/', api_views.DashboardPostDeleteAPIView.as_view()),
 
 ]

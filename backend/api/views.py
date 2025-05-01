@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -19,6 +19,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
 from datetime import datetime
 from drf_yasg import openapi
+from django.db.models import Q
 
 # Others
 import json
@@ -161,6 +162,7 @@ class PostDetailAPIView(generics.RetrieveAPIView):
         return post
         
 class LikePostAPIView(APIView):
+    permission_classes = [AllowAny]
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -232,6 +234,28 @@ class PostCommentAPIView(APIView):
 
         # Return response back to the frontend
         return Response({"message": "Commented Sent"}, status=status.HTTP_201_CREATED)
+ 
+
+class BookmarkDetailsAPIView(APIView):
+    pass
+
+
+
+class SearchPostsAPIView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        query = request.GET.get("query", "")
+        if query:
+            posts = api_models.Post.objects.filter(
+                Q(title__icontains=query) |  # Match title
+                Q(tags__icontains=query) |  # Match tags
+                Q(category__title__icontains=query),  # Match category title
+                status="Active"  # Ensure the post is active
+            )
+            serializer = api_serializer.PostSerializer(posts, many=True,context={"request": request})
+            return Response(serializer.data)
+        return Response({"message": "No query provided"}, status=400)
+    
  
 class BookmarkPostAPIView(APIView):
     @swagger_auto_schema(
@@ -379,13 +403,13 @@ class DashboardPostCreateAPIView(generics.CreateAPIView):
         category_id = request.data.get('category')
         post_status = request.data.get('post_status')
 
-        print(user_id)
-        print(title)
-        print(image)
-        print(description)
-        print(tags)
-        print(category_id)
-        print(post_status)
+        # print(user_id)
+        # print(title)
+        # print(image)
+        # print(description)
+        # print(tags)
+        # print(category_id)
+        # print(post_status)
 
         user = api_models.User.objects.get(id=user_id)
         category = api_models.Category.objects.get(id=category_id)
@@ -419,30 +443,44 @@ class DashboardPostEditAPIView(generics.RetrieveUpdateDestroyAPIView):
         image = request.data.get('image')
         description = request.data.get('description')
         tags = request.data.get('tags')
-        category_id = request.data.get('category')
+        # category_id = request.data.get('category')
         post_status = request.data.get('post_status')
 
-        print(title)
-        print(image)
-        print(description)
-        print(tags)
-        print(category_id)
-        print(post_status)
+        # print(title)
+        # print(image)
+        # print(description)
+        # print(tags)
+        # # print(category_id)
+        # # print(post_status)
 
-        category = api_models.Category.objects.get(id=category_id)
+        # category = api_models.Category.objects.get(id=category_id)
 
         post_instance.title = title
         if image != "undefined":
             post_instance.image = image
         post_instance.description = description
         post_instance.tags = tags
-        post_instance.category = category
+        # post_instance.category = category
         post_instance.status = post_status
         post_instance.save()
 
         return Response({"message": "Post Updated Successfully"}, status=status.HTTP_200_OK)
 
+class DashboardPostDeleteAPIView(APIView):
+    permission_classes = [AllowAny]
+    # permission_classes = [IsAuthenticated]
+    def delete(self, request, post_id):
+        print("*************************")
+        print(post_id)
+        post = get_object_or_404(api_models.Post, id=post_id)
+        print(post.user)
+        print(request.user)
+        # if post.user != request.user:
+        #     return Response({"error": "Unauthorized !"}, status=status.HTTP_403_FORBIDDEN)
 
+        # post.delete()
+        return Response({"message": "Post deleted"}, status=status.HTTP_204_NO_CONTENT) 
+            
 {
     "title": "New post",
     "image": "",
