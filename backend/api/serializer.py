@@ -135,12 +135,16 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
+    likes_count = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True)
     category = serializers.StringRelatedField()  # Include category title
+    bookmarks = serializers.SerializerMethodField()
 
     class Meta:
         model = api_models.Post
         fields = "__all__"
+        # fields = ['id', 'title', 'description', 'bookmarks', 'likes', 'view', 'category', 'tags', 'profile']
+
 
     def __init__(self, *args, **kwargs):
         super(PostSerializer, self).__init__(*args, **kwargs)
@@ -155,15 +159,24 @@ class PostSerializer(serializers.ModelSerializer):
         if obj.image:
             return request.build_absolute_uri(obj.image.url)
         return None
-
-
+    def get_likes_count(self, obj):
+        return obj.likes.count() 
+    
+    def get_bookmarks(self, obj):
+        return list(obj.bookmark_set.values_list('user_id', flat=True))  # Return a list of user IDs who bookmarked the post
 
 class BookmarkSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = api_models.Bookmark
         fields = "__all__"
 
+    def __init__(self, *args, **kwargs):
+        super(BookmarkSerializer, self).__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.method == 'POST':
+            self.Meta.depth = 0
+        else:
+            self.Meta.depth = 3
 
     def __init__(self, *args, **kwargs):
         super(BookmarkSerializer, self).__init__(*args, **kwargs)
