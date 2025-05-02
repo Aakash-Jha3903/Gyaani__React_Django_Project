@@ -6,7 +6,7 @@ from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
-from django.db.models import Sum
+from django.db.models import Sum, Count
 # Restframework
 from rest_framework import status
 from rest_framework.decorators import api_view, APIView, permission_classes
@@ -258,6 +258,8 @@ class SearchPostsAPIView(APIView):
     
  
 class BookmarkPostAPIView(APIView):
+    permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -267,10 +269,11 @@ class BookmarkPostAPIView(APIView):
             },
         ),
     )
-    
     def post(self, request):
         user_id = request.data['user_id']
         post_id = request.data['post_id']
+
+        print(f"User ID: {user_id}, Post ID: {post_id}")  # Debugging
 
         user = api_models.User.objects.get(id=user_id)
         post = api_models.Post.objects.get(id=post_id)
@@ -279,12 +282,14 @@ class BookmarkPostAPIView(APIView):
         if bookmark:
             # Remove post from bookmark
             bookmark.delete()
+            print("Bookmark removed")  # Debugging
             return Response({"message": "Post Un-Bookmarked"}, status=status.HTTP_200_OK)
         else:
             api_models.Bookmark.objects.create(
                 user=user,
                 post=post
             )
+            print("Bookmark added")  # Debugging
 
             # Notification
             api_models.Notification.objects.create(
@@ -293,7 +298,6 @@ class BookmarkPostAPIView(APIView):
                 type="Bookmark",
             )
             return Response({"message": "Post Bookmarked"}, status=status.HTTP_201_CREATED)
-
 
 ######################## Author Dashboard APIs ########################
 class DashboardStats(generics.ListAPIView):
@@ -306,8 +310,9 @@ class DashboardStats(generics.ListAPIView):
 
         views = api_models.Post.objects.filter(user=user).aggregate(view=Sum("view"))['view']
         posts = api_models.Post.objects.filter(user=user).count()
-        likes = api_models.Post.objects.filter(user=user).aggregate(total_likes=Sum("likes"))['total_likes']
-        bookmarks = api_models.Bookmark.objects.all().count()
+        likes = api_models.Post.objects.filter(user=user).annotate(like_count=Count('likes')).aggregate(total_likes=Sum('like_count'))['total_likes'] or 0
+        bookmarks = api_models.Bookmark.objects.filter(post__user=user).count()
+
 
         return [{
             "views": views,
