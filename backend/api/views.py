@@ -239,6 +239,33 @@ class PostCommentAPIView(APIView):
         return Response({"message": "Commented Sent"}, status=status.HTTP_201_CREATED)
  
 
+class ReplyToCommentAPIView(APIView):
+    def post(self, request):
+        comment_id = request.data.get("comment_id")
+        name = request.data.get("name")
+        email = request.data.get("email")
+        reply_text = request.data.get("reply")
+
+        if not all([comment_id, name, email, reply_text]):
+            return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            parent_comment = api_models.Comment.objects.get(id=comment_id)
+        except api_models.Comment.DoesNotExist:
+            return Response({"error": "Parent comment not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        reply = api_models.Comment.objects.create(
+            post=parent_comment.post,
+            parent=parent_comment,
+            name=name,
+            email=email,
+            comment=reply_text,
+        )
+
+        serialized_reply = api_serializer.ReplySerializer(reply)
+        return Response(serialized_reply.data, status=status.HTTP_201_CREATED)
+
+        
 class BookmarkDetailsAPIView(APIView):
     pass
 

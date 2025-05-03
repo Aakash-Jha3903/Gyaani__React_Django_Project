@@ -118,15 +118,34 @@ class CategorySerializer(serializers.ModelSerializer):
             self.Meta.depth = 0
         else:
             self.Meta.depth = 3
-
+            
 class CommentSerializer(serializers.ModelSerializer):
-    
+    replies = serializers.SerializerMethodField()
+
     class Meta:
         model = api_models.Comment
         fields = "__all__"
 
     def __init__(self, *args, **kwargs):
         super(CommentSerializer, self).__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.method == 'POST':
+            self.Meta.depth = 0
+        else:
+            self.Meta.depth = 1
+
+    def get_replies(self, obj):
+        if obj.replies.exists():
+            return ReplySerializer(obj.replies.all(), many=True, context=self.context).data
+        return []
+
+class ReplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = api_models.Comment  # Because replies are also 'Comment' objects
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super(ReplySerializer, self).__init__(*args, **kwargs)
         request = self.context.get('request')
         if request and request.method == 'POST':
             self.Meta.depth = 0

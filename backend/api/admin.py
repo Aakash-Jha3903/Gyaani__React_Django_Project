@@ -15,9 +15,13 @@ class CategoryAdmin(admin.ModelAdmin):
 class PostAdmin(admin.ModelAdmin):
     list_display = ["title","user","category","view"]
 
-class CommentAdmin(admin.ModelAdmin):
-    list_display = ["post","name","email","comment"]
 
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ["post", "name", "email", "comment", "parent", "date"]
+    search_fields = ["name", "email", "comment"]
+    list_filter = ["post", "parent"]  # Filter by post and parent comment
+    ordering = ["-date"]  # Order by most recent comments first
+    
 class BookmarkAdmin(admin.ModelAdmin):
     list_display = ["user","post"]
 
