@@ -175,6 +175,9 @@ class LikePostAPIView(APIView):
     def post(self, request):
         user_id = request.data['user_id']
         post_id = request.data['post_id']
+        if not user_id or not post_id:
+            return Response({"error": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
+
 
         user = api_models.User.objects.get(id=user_id)
         post = api_models.Post.objects.get(id=post_id)
@@ -272,8 +275,11 @@ class BookmarkPostAPIView(APIView):
     def post(self, request):
         user_id = request.data['user_id']
         post_id = request.data['post_id']
+        
+        if not user_id or not post_id:
+            return Response({"error": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
-        print(f"User ID: {user_id}, Post ID: {post_id}")  # Debugging
+        # print(f"User ID: {user_id}, Post ID: {post_id}")  
 
         user = api_models.User.objects.get(id=user_id)
         post = api_models.Post.objects.get(id=post_id)
