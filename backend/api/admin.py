@@ -28,6 +28,13 @@ class BookmarkAdmin(admin.ModelAdmin):
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ["user","post","type","seen",]
 
+
+@admin.register(api_models.Follow)
+class FollowAdmin(admin.ModelAdmin):
+    list_display = ('follower', 'following', 'date')
+    search_fields = ('follower__email', 'following__email')
+    list_filter = ('date',)
+
 admin.site.register(api_models.User, UserAdmin)
 admin.site.register(api_models.Profile, ProfileAdmin)
 admin.site.register(api_models.Category, CategoryAdmin)

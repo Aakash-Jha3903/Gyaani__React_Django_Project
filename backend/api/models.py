@@ -27,6 +27,22 @@ class User(AbstractUser):
             self.username = email_username  
     
         super(User, self).save(*args, **kwargs)
+    def follow(self, user):
+        """Follow another user."""
+        if not Follow.objects.filter(follower=self, following=user).exists():
+            Follow.objects.create(follower=self, following=user)
+
+    def unfollow(self, user):
+        """Unfollow another user."""
+        Follow.objects.filter(follower=self, following=user).delete()
+
+    def is_following(self, user):
+        """Check if the user is following another user."""
+        return Follow.objects.filter(follower=self, following=user).exists()
+
+    def is_followed_by(self, user):
+        """Check if the user is followed by another user."""
+        return Follow.objects.filter(follower=user, following=self).exists()
 
 
 class Profile(models.Model):
@@ -66,6 +82,20 @@ def save_user_profile(sender, instance, **kwargs):
 
 post_save.connect(create_user_profile, sender=User)
 post_save.connect(save_user_profile, sender=User)
+
+
+class Follow(models.Model):
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following")
+    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="followers")
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.follower.email} follows {self.following.email}"
+
+    class Meta:
+        verbose_name_plural = "Follow"
+        unique_together = ('follower', 'following')  # Prevent duplicate follow entries
+
 
 class Category(models.Model):
     title = models.CharField(max_length=100)
