@@ -192,6 +192,26 @@ class PostSerializer(serializers.ModelSerializer):
             "full_name": profile.full_name if profile else None,
             "bio": profile.bio if profile else None,
         }
+
+class FollowSerializer(serializers.ModelSerializer):
+    follower = serializers.StringRelatedField()
+    following = serializers.SerializerMethodField()
+
+    class Meta:
+        model = api_models.Follow
+        fields = ['id', 'follower', 'following', 'date']
+
+    def get_following(self, obj):
+        return {
+            "id": obj.following.id,
+            "email": obj.following.email,
+            "full_name": obj.following.full_name,
+            "profile": {
+                "image": obj.following.profile.image.url if obj.following.profile.image else None
+            }
+        }
+        
+        
 class BookmarkSerializer(serializers.ModelSerializer):
     class Meta:
         model = api_models.Bookmark

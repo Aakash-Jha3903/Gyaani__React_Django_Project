@@ -21,7 +21,12 @@ urlpatterns = [
     path('post/bookmark-post/', api_views.BookmarkPostAPIView.as_view()),
     path('post/comment-post/', api_views.PostCommentAPIView.as_view()),
     path("search-posts/", api_views.SearchPostsAPIView.as_view(), name="search-posts"),
-
+    
+    # Follow Endpoints
+    path('user/follow/', api_views.FollowUserAPIView.as_view(), name='follow_user'),
+    path('user/unfollow/', api_views.UnfollowUserAPIView.as_view(), name='unfollow_user'),
+    path('user/following/<user_id>/', api_views.FollowingListAPIView.as_view(), name='following_list'),
+    path('user/followers/<user_id>/', api_views.FollowersListAPIView.as_view(), name='followers_list'),
 
     # Dashboard APIS
     path('author/dashboard/stats/<user_id>/', api_views.DashboardStats.as_view()),

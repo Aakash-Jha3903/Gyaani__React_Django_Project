@@ -125,7 +125,82 @@ class PasswordChangeView(generics.CreateAPIView):
 
 
 
-######################## Post APIs ########################
+#-------------------------------------- Post APIs ----------------------------------------------
+
+
+class FollowUserAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        follower_id = request.data.get('follower_id')
+        following_id = request.data.get('following_id')
+
+        if not follower_id or not following_id:
+            return Response({"error": "Both follower_id and following_id are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            follower = api_models.User.objects.get(id=follower_id)
+            following = api_models.User.objects.get(id=following_id)
+        except api_models.User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if api_models.Follow.objects.filter(follower=follower, following=following).exists():
+            # Instead of returning a 400 error, return a friendly message
+            return Response({"message": "You are already following this user."}, status=status.HTTP_200_OK)
+
+        api_models.Follow.objects.create(follower=follower, following=following)
+        return Response({"message": "User followed successfully"}, status=status.HTTP_201_CREATED)
+    
+class UnfollowUserAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        follower_id = request.data.get('follower_id')  # Get follower ID from request
+        following_id = request.data.get('following_id')  # Get following ID from request
+
+        if not follower_id or not following_id:
+            return Response({"error": "Both follower_id and following_id are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            follower = api_models.User.objects.get(id=follower_id)
+            following = api_models.User.objects.get(id=following_id)
+        except api_models.User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        follow_instance = api_models.Follow.objects.filter(follower=follower, following=following).first()
+        if not follow_instance:
+            return Response({"error": "You are not following this user"}, status=status.HTTP_400_BAD_REQUEST)
+
+        follow_instance.delete()
+        return Response({"message": "User unfollowed successfully"}, status=status.HTTP_200_OK)
+
+
+class FollowingListAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id):
+        try:
+            user = api_models.User.objects.get(id=user_id)
+        except api_models.User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        following = api_models.Follow.objects.filter(follower=user)
+        serializer = api_serializer.FollowSerializer(following, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class FollowersListAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id):
+        try:
+            user = api_models.User.objects.get(id=user_id)
+        except api_models.User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        followers = api_models.Follow.objects.filter(following=user)
+        serializer = api_serializer.FollowSerializer(followers, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)         
 
 class CategoryListAPIView(generics.ListAPIView):
     serializer_class = api_serializer.CategorySerializer
