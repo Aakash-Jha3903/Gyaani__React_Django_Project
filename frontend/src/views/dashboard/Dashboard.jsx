@@ -8,6 +8,7 @@ import apiInstance from "../../utils/axios";
 import useUserData from "../../plugin/useUserData";
 import moment from "moment";
 import Toast from "../../plugin/Toast";
+import { SERVER_URL } from "../../utils/constants";
 
 import Swal from "sweetalert2";
 function Dashboard() {
@@ -23,13 +24,20 @@ function Dashboard() {
     const [following, setFollowing] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const navigate = useNavigate();
+    const [bookmarks, setBookmarks] = useState([]);
 
+    
+    
+    const navigate = useNavigate();
+    
     const fetchDashboardData = async () => {
         try {
             const stats_res = await apiInstance.get(`author/dashboard/stats/${userId}/`);
             setStats(stats_res.data[0]);
-
+            
+            const bookmarks_res = await apiInstance.get(`/user/bookmarks/${userId}/`);
+            setBookmarks(bookmarks_res.data);
+            
             const post_res = await apiInstance.get(`author/dashboard/post-list/${userId}/`);
             setPosts(post_res.data);
 
@@ -231,7 +239,7 @@ function Dashboard() {
                                     </div>
                                     <div className="card-body p-3">
                                         <div className="row">
-                                            {posts?.map((p, index) => (
+                                            {posts.slice(0,3)?.map((p, index) => (
                                                 <>
                                                     <div className="col-12">
                                                         <div className="d-flex position-relative">
@@ -270,7 +278,7 @@ function Dashboard() {
                             <div className="col-md-6 col-xxl-4">
                                 <div className="card border h-100">
                                     <div className="card-header border-bottom d-flex justify-content-between align-items-center  p-3">
-                                        <h5 className="card-header-title mb-0">Comments ({comments?.length})</h5>
+                                        <h5 className="card-header-title mb-0">Booksmarks ({bookmarks?.length})</h5>
                                         <div className="dropdown text-end">
                                             <a href="#" className="btn border-0 p-0 mb-0" role="button" id="dropdownShare3" data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i className="bi bi-chat-left-quote-fill text-success fa-fw" />
@@ -279,25 +287,29 @@ function Dashboard() {
                                     </div>
                                     <div className="card-body p-3">
                                         <div className="row">
-                                            {comments?.slice(0, 3).map((c, index) => (
+                                        {bookmarks?.slice(0, 3).map((bookmark, index) => (
                                                 <>
                                                     <div className="col-12">
                                                         <div className="d-flex align-items-center position-relative">
-                                                            <div className="avatar avatar-lg flex-shrink-0">
-                                                                <img className="avatar-img" src="https://as1.ftcdn.net/v2/jpg/03/53/11/00/1000_F_353110097_nbpmfn9iHlxef4EDIhXB1tdTD0lcWhG9.jpg" style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "50%" }} alt="avatar" />
-                                                            </div>
+                                                            <img
+                                                                className="rounded"
+                                                                src={`${SERVER_URL}/${bookmark.post?.image}` || "https://via.placeholder.com/100"}
+                                                                style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "10px" }}
+                                                                alt="Post"
+                                                            />
                                                             <div className="ms-3">
                                                                 <p className="mb-1">
-                                                                    <a className="h6 stretched-link text-decoration-none text-dark" href="#">
-                                                                        {c.comment}
-                                                                    </a>
+                                                                    <Link
+                                                                        className="h6 stretched-link text-decoration-none text-dark"
+                                                                        to={`/post/${bookmark.post?.id}/`}
+                                                                    >
+                                                                        {bookmark.post?.title}
+                                                                    </Link>
                                                                 </p>
-                                                                <div className="d-flex justify-content-between">
-                                                                    <p className="small mb-0">
-                                                                        <i>by</i> {c.name} <br />
-                                                                        <i>Date</i> {moment(c.date).format("DD MMM, YYYY")}
-                                                                    </p>
-                                                                </div>
+                                                                <p className="small mb-0">
+                                                                    <i className="fas fa-calendar me-2"></i>
+                                                                    {moment(bookmark.date).format("DD MMM, YYYY")}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -308,8 +320,8 @@ function Dashboard() {
                                     </div>
 
                                     <div className="card-footer border-top text-center p-3">
-                                        <Link to="/comments/" className="fw-bold text-decoration-none text-dark">
-                                            View all Comments
+                                        <Link to="/bookmarks/" className="fw-bold text-decoration-none text-dark">
+                                            View my BookMarks
                                         </Link>
                                     </div>
                                 </div>
@@ -354,8 +366,8 @@ function Dashboard() {
                                                                                 </p>
                                                                             )}
                                                                         </div>
-                                                                        <span className="small">5 min ago</span>
-                                                                        <br />
+                                                                        <span className="small">5 min ago</span> {"  "}
+                                                                        {/* <br /> */}
                                                                         <button onClick={() => handleMarkNotiAsSeen(n.id)} className="btn btn-secondary mt-2">
                                                                             <i className="fas fa-check-circle"></i>
                                                                         </button>
@@ -363,7 +375,7 @@ function Dashboard() {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <hr className="my-3" />
+                                                        <hr className="my-1" />
                                                     </>
                                                 ))}
                                             </div>
@@ -407,7 +419,7 @@ function Dashboard() {
                                                             Published Date
                                                         </th>
                                                         <th scope="col" className="border-0">
-                                                            Category
+                                                            Likes
                                                         </th>
                                                         <th scope="col" className="border-0">
                                                             Status
@@ -420,6 +432,7 @@ function Dashboard() {
                                                 <tbody className="border-top-0">
                                                     {posts?.map((p, index) => (
                                                         <tr>
+                                                        
                                                             <td>
                                                                 <h6 className="mt-2 mt-md-0 mb-0 ">
                                                                     <a href="#" className="text-dark text-decoration-none">
@@ -435,7 +448,7 @@ function Dashboard() {
                                                                 </h6>
                                                             </td>
                                                             <td>{moment(p.date).format("DD MMM, YYYY")}</td>
-                                                            <td>{p.category?.title}</td>
+                                                            <td>{p.likes_count}</td>
                                                             <td>
                                                                 <span className="badge bg-dark bg-opacity-10 text-dark mb-2">{p.status}</span>
                                                             </td>
@@ -457,6 +470,7 @@ function Dashboard() {
                                                         </tr>
                                                     ))}
                                                 </tbody>
+
                                             </table>
                                         </div>
                                     </div>
