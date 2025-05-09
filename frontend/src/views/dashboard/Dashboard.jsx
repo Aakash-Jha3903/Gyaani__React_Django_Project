@@ -26,18 +26,18 @@ function Dashboard() {
 
     const [bookmarks, setBookmarks] = useState([]);
 
-    
-    
+
+
     const navigate = useNavigate();
-    
+
     const fetchDashboardData = async () => {
         try {
             const stats_res = await apiInstance.get(`author/dashboard/stats/${userId}/`);
             setStats(stats_res.data[0]);
-            
+
             const bookmarks_res = await apiInstance.get(`/user/bookmarks/${userId}/`);
             setBookmarks(bookmarks_res.data);
-            
+
             const post_res = await apiInstance.get(`author/dashboard/post-list/${userId}/`);
             setPosts(post_res.data);
 
@@ -155,39 +155,28 @@ function Dashboard() {
                                                 <div className="icon-xl fs-1 p-3 bg-success bg-opacity-10 rounded-3 text-success">
                                                     <i className="bi bi-people-fill" />
                                                 </div>
-                                                <div className="ms-3">
-                                                    <h3>{stats.views}</h3>
-                                                    <h6 className="mb-0">Total Views</h6>
+                                                <div className="ms-3" onClick={() => navigate(`/dashboard/followers`)}>
+                                                    <h3>{followers.length}</h3>
+                                                    <h6 className="mb-0" >Followers</h6>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+
                                     <div className="col-sm-6 col-lg-3">
                                         <div className="card card-body border p-3">
                                             <div className="d-flex align-items-center">
                                                 <div className="icon-xl fs-1 p-3 bg-primary bg-opacity-10 rounded-3 text-primary">
                                                     <i className="bi bi-file-earmark-text-fill" />
                                                 </div>
-                                                <div className="ms-3">
+                                                <div className="ms-3" >
                                                     <h3>{stats.posts}</h3>
                                                     <h6 className="mb-0">Posts</h6>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="col-sm-6 col-lg-3">
-                                        <div className="card card-body border p-3">
-                                            <div className="d-flex align-items-center">
-                                                <div className="icon-xl fs-1 p-3 bg-danger bg-opacity-10 rounded-3 text-danger">
-                                                    <i className="bi bi-suit-heart-fill" />
-                                                </div>
-                                                <div className="ms-3">
-                                                    <h3>{stats.likes}</h3>
-                                                    <h6 className="mb-0">Likes</h6>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+
                                     <div className="col-sm-6 col-lg-3">
                                         <div className="card card-body border p-3">
                                             <div className="d-flex align-items-center">
@@ -201,32 +190,21 @@ function Dashboard() {
                                             </div>
                                         </div>
                                     </div>
+                                    <div className="col-sm-6 col-lg-3">
+                                        <div className="card card-body border p-3">
+                                            <div className="d-flex align-items-center">
+                                                <div className="icon-xl fs-1 p-3 bg-primary bg-opacity-10 rounded-3 text-primary">
+                                                    <i className="bi bi-people" />
+                                                </div>
+                                                <div className="ms-3" onClick={() => navigate(`/dashboard/following`)} >
+                                                    <h3>{stats.posts}</h3>
+                                                    <h6 className="mb-0">Following</h6>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div className="row">
-                                {/* Followers Section */}
-                                <div className="col-md-6">
-                                    <h4>Followers : <span>{followers.length}</span></h4>
-                                    <button
-                                        className="btn btn-primary"
-                                        onClick={() => navigate(`/dashboard/followers`)}
-                                    >
-                                        View Followers
-                                    </button>
-                                </div>
-                                {/* Following Section */}
-                                <div className="col-md-6">
-                                    <h4>Following : <span>{following.length}</span> </h4>
-                                    <button
-                                        className="btn btn-primary"
-                                        onClick={() => navigate(`/dashboard/following`)}
-                                    >
-                                        View Following
-                                    </button>
-                                </div>
-                            </div>
-
                             <div className="col-md-6 col-xxl-4">
                                 <div className="card border h-100">
                                     <div className="card-header border-bottom d-flex justify-content-between align-items-center  p-3">
@@ -239,7 +217,7 @@ function Dashboard() {
                                     </div>
                                     <div className="card-body p-3">
                                         <div className="row">
-                                            {posts.slice(0,3)?.map((p, index) => (
+                                            {posts.slice(0, 3)?.map((p, index) => (
                                                 <>
                                                     <div className="col-12">
                                                         <div className="d-flex position-relative">
@@ -287,7 +265,7 @@ function Dashboard() {
                                     </div>
                                     <div className="card-body p-3">
                                         <div className="row">
-                                        {bookmarks?.slice(0, 3).map((bookmark, index) => (
+                                            {bookmarks?.slice(0, 3).map((bookmark, index) => (
                                                 <>
                                                     <div className="col-12">
                                                         <div className="d-flex align-items-center position-relative">
@@ -432,7 +410,7 @@ function Dashboard() {
                                                 <tbody className="border-top-0">
                                                     {posts?.map((p, index) => (
                                                         <tr>
-                                                        
+
                                                             <td>
                                                                 <h6 className="mt-2 mt-md-0 mb-0 ">
                                                                     <a href="#" className="text-dark text-decoration-none">
@@ -480,8 +458,8 @@ function Dashboard() {
                     </div>
                     {/* </ > */}
                 </section>
-                <Footer />
             </div>
+            <Footer />
         </>
     );
 }
