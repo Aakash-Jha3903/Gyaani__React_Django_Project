@@ -129,7 +129,7 @@ function Dashboard() {
 
         if (result.isConfirmed) {
             try {
-                await apiInstance.delete(`author/dashboard/post-delete/${postId}/`);
+                await apiInstance.delete(`author/dashboard/post-delete/${postId}/${userId}`);
                 Toast("success", "Post deleted successfully");
             } catch (error) {
                 console.error("Delete failed", error);

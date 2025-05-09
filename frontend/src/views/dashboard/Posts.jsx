@@ -36,7 +36,7 @@ function Posts() {
     const handleSortChange = (e) => {
         const sortValue = e.target.value;
         let sortedPosts = [...posts]; // Assuming filteredPosts contains the initial posts data
-        console.log(sortValue);
+        // console.log(sortValue);
         if (sortValue === "Newest") {
             sortedPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
         } else if (sortValue === "Oldest") {
@@ -110,13 +110,13 @@ function Posts() {
                                                         Published Date
                                                     </th>
                                                     <th scope="col" className="border-0">
-                                                        Category
+                                                        Likes
                                                     </th>
                                                     <th scope="col" className="border-0">
                                                         Status
                                                     </th>
                                                     <th scope="col" className="border-0 rounded-end">
-                                                        Action
+                                                        Edit
                                                     </th>
                                                 </tr>
                                             </thead>
@@ -143,7 +143,7 @@ function Posts() {
                                                             </h6>
                                                         </td>
                                                         <td>{moment(p.date).format("DD MMM, YYYY")}</td>
-                                                        <td>{p.category?.title}</td>
+                                                        <td>{p.likes_count}</td>
                                                         <td>
                                                             <span className="badge bg-dark bg-opacity-10 text-dark mb-2">{p.status}</span>
                                                         </td>
@@ -151,9 +151,6 @@ function Posts() {
                                                             <div className="d-flex gap-2">
                                                                 <Link to={`/edit-post/${p.id}/${p?.id}`} className="btn btn-primary btn-round mb-0" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
                                                                     <i className="bi bi-pencil-square" />
-                                                                </Link>
-                                                                <Link className="btn-round mb-0 btn btn-danger" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
-                                                                    <i className="bi bi-trash" />
                                                                 </Link>
                                                             </div>
                                                         </td>
