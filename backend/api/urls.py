@@ -19,6 +19,8 @@ urlpatterns = [
     path('post/like-post/', api_views.LikePostAPIView.as_view()),
     path('post/bookmark-details/<post_id>', api_views.BookmarkDetailsAPIView.as_view()),
     path('post/bookmark-post/', api_views.BookmarkPostAPIView.as_view()),
+    path('user/bookmarks/<int:user_id>/', api_views.UserBookmarksAPIView.as_view(), name='user-bookmarks'),
+
     path('post/comment-post/', api_views.PostCommentAPIView.as_view()),
     path("search-posts/", api_views.SearchPostsAPIView.as_view(), name="search-posts"),
     

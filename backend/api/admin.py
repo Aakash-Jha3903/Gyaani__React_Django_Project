@@ -3,7 +3,7 @@ from api import models as api_models
 
 class UserAdmin(admin.ModelAdmin):
     search_fields  = ['full_name', 'username', 'email']
-    list_display  = ['username', 'email']
+    list_display  = ['id',  'username', 'email',]
 
 class ProfileAdmin(admin.ModelAdmin):
     search_fields  = ['user']
@@ -31,7 +31,7 @@ class NotificationAdmin(admin.ModelAdmin):
 
 @admin.register(api_models.Follow)
 class FollowAdmin(admin.ModelAdmin):
-    list_display = ('follower', 'following', 'date')
+    list_display = ('id' ,'follower', 'following','date', )
     search_fields = ('follower__email', 'following__email')
     list_filter = ('date',)
 

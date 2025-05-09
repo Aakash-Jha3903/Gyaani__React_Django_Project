@@ -407,6 +407,15 @@ class BookmarkPostAPIView(APIView):
             )
             return Response({"message": "Post Bookmarked"}, status=status.HTTP_201_CREATED)
 
+class UserBookmarksAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id):
+        bookmarks = api_models.Bookmark.objects.filter(user_id=user_id).select_related('post')
+        serializer = api_serializer.BookmarkSerializer(bookmarks, many=True)
+        return Response(serializer.data, status=200)
+    
+    
 ######################## Author Dashboard APIs ########################
 class DashboardStats(generics.ListAPIView):
     serializer_class = api_serializer.AuthorStats
