@@ -42,5 +42,5 @@ urlpatterns = [
     path('author/dashboard/post-create/', api_views.DashboardPostCreateAPIView.as_view()),
     path('author/dashboard/post-detail/<user_id>/<post_id>/', api_views.DashboardPostEditAPIView.as_view()),
     path('author/dashboard/post-delete/<post_id>/<user_id>', api_views.DashboardPostDeleteAPIView.as_view()),
-
+    path("sendGmail/contact/", api_views.ContactAPIView.as_view()),
 ]

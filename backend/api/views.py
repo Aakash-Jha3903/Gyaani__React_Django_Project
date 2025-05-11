@@ -227,12 +227,15 @@ class PostDetailAPIView(generics.RetrieveAPIView):
     serializer_class = api_serializer.PostSerializer
 
     def get_object(self):
-        slug = self.kwargs['slug']
-        post = api_models.Post.objects.get(slug=slug, status="Active")
-        # post.view += 1    
-        post.save()
-        return post
-    
+        try:
+            slug = self.kwargs['slug']
+            post = api_models.Post.objects.get(slug=slug, status="Active")
+            # post.view += 1    
+            post.save()
+            return post
+        except api_models.Post.DoesNotExist:
+            return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+
 class IncrementViewAPIView(APIView):
     permission_classes = [AllowAny]
     def post(self, request,slug):
@@ -529,11 +532,30 @@ class DashboardPostDeleteAPIView(APIView):
         post.delete()
         return Response({"message": "Post deleted"}, status=status.HTTP_204_NO_CONTENT) 
             
-{
-    "title": "New post",
-    "image": "",
-    "description": "lorem description ....",
-    "tags": "tags, here",
-    "category_id": 1,
-    "post_status": "Active"
-}
+
+class ContactAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        name = request.data.get("name")
+        email = request.data.get("email")
+        subject = request.data.get("subject")
+        message = request.data.get("message")
+
+        if not all([name, email, subject, message]):
+            return Response({"error": "All fields are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Send email to the user
+            user_message = f"Hi {name},\n\nThank you for reaching out! Here is a copy of your message:\n\n{message}\n\nWe will get back to you soon.\n\nBest regards,\nAakash Jha"
+            user = api_models.User(email=email)  # Create a temporary user object to use email_user()
+            user.email_user(f"Your message to Aakash Jha: {subject}", user_message)
+
+            # Send email to Aakash Jha
+            admin_message = f"You have received a new message:\n\nName: {name}\nEmail: {email}\nMessage: {message}"
+            admin = api_models.User(email="aakashjha343@gmail.com")  # Create a temporary user object for admin
+            admin.email_user(f"New Contact Form Submission: {subject}", admin_message)
+
+            return Response({"message": "Emails sent successfully!"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

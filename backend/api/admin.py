@@ -3,11 +3,14 @@ from api import models as api_models
 
 class UserAdmin(admin.ModelAdmin):
     search_fields  = ['full_name', 'username', 'email']
-    list_display  = ['id',  'username', 'email',]
+    list_display  = ['id',  'username', 'email','full_name']
 
 class ProfileAdmin(admin.ModelAdmin):
     search_fields  = ['user']
-    list_display = ['thumbnail', 'user', 'full_name']
+    list_display = ['thumbnail', 'user', 'full_name', 'get_email',]
+    def get_email(self, obj):
+        return obj.user.email
+    get_email.short_description = 'Email'
 
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ["title"]
