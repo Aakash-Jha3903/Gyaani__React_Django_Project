@@ -3,7 +3,7 @@ import Header from "../partials/Header";
 import Footer from "../partials/Footer";
 import { useParams, Link, useNavigate } from "react-router-dom";
 
-import apiInstance from "../../utils/axios";
+// import apiInstance from "../../utils/axios";
 import { useAuthStore } from "../../store/auth";
 import { login, register } from "../../utils/auth";
 
@@ -30,17 +30,24 @@ function Login() {
     const handleLogin = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-
-        const { error } = await login(bioData.email, bioData.password);
-        if (error) {
-            alert(JSON.stringify(error));
-            resetForm();
-        } else {
-            navigate("/");
+        console.log("Login initiated..."); // Debugging
+        try {
+            const { error } = await login(bioData.email, bioData.password);
+            if (error) {
+                console.error("Login error:", error); // Debugging
+                alert(JSON.stringify(error));
+                resetForm();
+            } else {
+                console.log("Login successful"); // Debugging
+                navigate("/");
+            }
+        } catch (err) {
+            console.error("Unexpected error during login:", err); // Debugging
+        
+        } finally {
+            setIsLoading(false); // Ensure the loader stops
+            console.log("Login process completed."); // Debugging
         }
-
-        // Reset isLoading to false when the operation is complete
-        setIsLoading(false);
     };
 
     return (
