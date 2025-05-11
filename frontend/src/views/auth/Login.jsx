@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Header from "../partials/Header";
 import Footer from "../partials/Footer";
 import { useParams, Link, useNavigate } from "react-router-dom";
-
+import Toast from "../../plugin/Toast";
 // import apiInstance from "../../utils/axios";
 import { useAuthStore } from "../../store/auth";
 import { login, register } from "../../utils/auth";
@@ -35,15 +35,16 @@ function Login() {
             const { error } = await login(bioData.email, bioData.password);
             if (error) {
                 console.error("Login error:", error); // Debugging
-                alert(JSON.stringify(error));
+                Toast("error", error); // Display error using Toast
                 resetForm();
             } else {
                 console.log("Login successful"); // Debugging
+                Toast("success", "Login successful!"); // Display success message
                 navigate("/");
             }
         } catch (err) {
             console.error("Unexpected error during login:", err); // Debugging
-        
+        Toast("error", "An unexpected error occurred. Please try again."); // Display error using Toast
         } finally {
             setIsLoading(false); // Ensure the loader stops
             console.log("Login process completed."); // Debugging
