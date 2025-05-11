@@ -55,19 +55,16 @@ function Footer() {
                 <div className="text-primary-hover text-white text-center">
 
                     <Link className="text-center text-decoration-none text-white   " to="/">
-                        {/* <span style={{ display: 'flex', alignItems: 'center' }}> */}
                             <FontAwesomeIcon
                                 icon={faReact}
                                 spin
                                 size="lg"
-                                style={{ marginRight: '10px', color: "#61dafb" }} // React official blue color
+                                style={{ marginRight: '10px', color: "#61dafb" }} 
                             />
                             <FontAwesomeIcon
                                 icon={faPython}
                                 size="lg"
-                            // style={{ color: "#306998" }} // Python official color
                             />
-                        {/* </span> */}
                         </Link> {' '}
                     Gyaani | Made with ❤️ by Aakash Jha 
 

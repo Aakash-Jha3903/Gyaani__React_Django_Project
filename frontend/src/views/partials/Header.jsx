@@ -24,7 +24,7 @@ function Header() {
                             <FontAwesomeIcon
                                 icon={faPython}
                                 size="2x"
-                                // style={{ color: "#306998" }}
+                            // style={{ color: "#306998" }}
                             />
                         </div>
                     </Link>
@@ -46,34 +46,6 @@ function Header() {
                                 <Link className="nav-link active" to="/search/">
                                     Search Articles
                                 </Link>
-                            </li>
-                            <li className="nav-item dropdown">
-                                <a className="nav-link dropdown-toggle active" href="#" id="pagesMenu" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    Your Posts
-                                </a>
-                                <ul className="dropdown-menu" aria-labelledby="pagesMenu">
-                                    <li>
-                                        <Link className="dropdown-item" to="/posts/">
-                                            <i className="bi bi-grid-fill"></i> Posts
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link className="dropdown-item" to="/add-post/">
-                                            <i className="fas fa-plus-circle"></i> Add Post
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link className="dropdown-item" to="/comments/">
-                                            <i className="bi bi-chat-left-quote-fill"></i> Comments
-                                        </Link>
-                                    </li>
-                                    <li>
-                                        <Link className="dropdown-item" to="/notifications/">
-                                            <i className="fas fa-bell"></i> Notifications
-                                        </Link>
-                                    </li>
-
-                                </ul>
                             </li>
                             <li className="nav-item dropdown">
                                 <Link className="nav-link active" to="/about/">
