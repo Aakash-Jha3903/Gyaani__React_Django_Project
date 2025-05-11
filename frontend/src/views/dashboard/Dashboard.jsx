@@ -4,21 +4,20 @@ import Header from "../partials/Header";
 import Footer from "../partials/Footer";
 import { Link, useNavigate } from "react-router-dom";
 
-import apiInstance from "../../utils/axios";
+// import apiInstance from "../../utils/axios";
 import useUserData from "../../plugin/useUserData";
 import moment from "moment";
 import Toast from "../../plugin/Toast";
 import { SERVER_URL } from "../../utils/constants";
 
 import Swal from "sweetalert2";
+import useAxios from "../../utils/useAxios";
 function Dashboard() {
-    const [stats, setStats] = useState([]);
+    const apiInstance = useAxios();
     const [posts, setPosts] = useState([]);
-    const [comments, setComments] = useState([]);
     const [noti, setNoti] = useState([]);
 
     const userId = useUserData()?.user_id;
-    // const userId = useAuthStore((state) => state.user?.id); // Get the logged-in user's ID
 
     const [followers, setFollowers] = useState([]);
     const [following, setFollowing] = useState([]);
@@ -26,14 +25,10 @@ function Dashboard() {
 
     const [bookmarks, setBookmarks] = useState([]);
 
-
-
     const navigate = useNavigate();
 
     const fetchDashboardData = async () => {
         try {
-            const stats_res = await apiInstance.get(`author/dashboard/stats/${userId}/`);
-            setStats(stats_res.data[0]);
 
             const bookmarks_res = await apiInstance.get(`/user/bookmarks/${userId}/`);
             setBookmarks(bookmarks_res.data);
@@ -41,10 +36,7 @@ function Dashboard() {
             const post_res = await apiInstance.get(`author/dashboard/post-list/${userId}/`);
             setPosts(post_res.data);
 
-            const comment_res = await apiInstance.get(`author/dashboard/comment-list/`);
-            setComments(comment_res.data);
-
-            const noti_res = await apiInstance.get(`author/dashboard/noti-list/${userId}/`);
+            const noti_res = await  apiInstance.get(`author/dashboard/noti-list/${userId}/`);
             setNoti(noti_res.data);
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
@@ -56,9 +48,8 @@ function Dashboard() {
 
     const handleMarkNotiAsSeen = async (notiId) => {
         const response = await apiInstance.post("author/dashboard/noti-mark-seen/", { noti_id: notiId });
-        console.log(response.data);
-        fetchDashboardData();
         Toast("success", "Notification Seen", "");
+        fetchDashboardData();
     };
 
     useEffect(() => {
@@ -78,42 +69,6 @@ function Dashboard() {
         };
         fetchFollowData();
     }, [userId]);
-
-    const handleFollow = async (followingId) => {
-        console.log("Follow Payload:", { follower_id: userId, following_id: followingId }); // Debugging
-        try {
-            const response = await apiInstance.post("/user/follow/", { follower_id: userId, following_id: followingId });
-            console.log("Follow Response:", response.data); // Debugging
-            Toast("success", "Followed successfully!");
-            // Refresh the following data
-            const updatedFollowing = await apiInstance.get(`/user/following/${userId}/`);
-            setFollowing(updatedFollowing.data);
-        } catch (error) {
-            console.error("Error following user:", error);
-            Toast("error", `Failed to follow the user. ${error.response?.data?.error || "An error occurred."}`);
-        }
-    };
-
-    const handleUnfollow = async (followingId) => {
-        if (!userId || !followingId) {
-            Toast("error", "Invalid user data. Please try again.");
-            console.log("Invalid userId or followingId:", { userId, followingId }); // Debugging
-            return;
-        }
-
-        console.log("Unfollow Payload:", { follower_id: userId, following_id: followingId }); // Debugging
-        try {
-            const response = await apiInstance.post("/user/unfollow/", { follower_id: userId, following_id: followingId });
-            console.log("Unfollow Response:", response.data); // Debugging
-            Toast("success", "Unfollowed successfully!");
-            // Refresh the following data
-            const updatedFollowing = await apiInstance.get(`/user/following/${userId}/`);
-            setFollowing(updatedFollowing.data);
-        } catch (error) {
-            console.error("Error unfollowing user:", error);
-            Toast("error", `Failed to unfollow the user. ${error.response?.data?.error || "An error occurred."}`);
-        }
-    };
 
     const handleDeletePost = async (postId) => {
         const result = await Swal.fire({
@@ -141,9 +96,11 @@ function Dashboard() {
     return (
         <>
             <Header />
-            <div className="container mt-5">
-                <h1 className="mb-4">Dashboard</h1>
-
+            <div className="container mt-4">
+                <div className="mb-0 d-flex align-items-center justify-content-between ">
+                    <h2 className="">Welcome, {useUserData()?.full_name || " "} </h2>
+                    <h4 className="d-flex align-items-center justify-content-center" >Dashboard</h4>
+                </div>
                 <section className="py-4" >
                     <div className="container">
                         <div className="row g-4">
@@ -152,10 +109,10 @@ function Dashboard() {
                                     <div className="col-sm-6 col-lg-3">
                                         <div className="card card-body border p-3">
                                             <div className="d-flex align-items-center">
-                                                <div className="icon-xl fs-1 p-3 bg-success bg-opacity-10 rounded-3 text-success">
+                                                <div className="icon-xl fs-1 p-3 bg-success bg-opacity-10 rounded-3 text-success" onClick={() => navigate(`/dashboard/followers`)}>
                                                     <i className="bi bi-people-fill" />
                                                 </div>
-                                                <div className="ms-3" onClick={() => navigate(`/dashboard/followers`)}>
+                                                <div className="ms-3" >
                                                     <h3>{followers.length}</h3>
                                                     <h6 className="mb-0" >Followers</h6>
                                                 </div>
@@ -166,11 +123,12 @@ function Dashboard() {
                                     <div className="col-sm-6 col-lg-3">
                                         <div className="card card-body border p-3">
                                             <div className="d-flex align-items-center">
-                                                <div className="icon-xl fs-1 p-3 bg-primary bg-opacity-10 rounded-3 text-primary">
+                                                <div className="icon-xl fs-1 p-3 bg-primary bg-opacity-10 rounded-3 text-primary"
+                                                    onClick={() => navigate(`/posts/`)}>
                                                     <i className="bi bi-file-earmark-text-fill" />
                                                 </div>
                                                 <div className="ms-3" >
-                                                    <h3>{stats.posts}</h3>
+                                                    <h3>{posts.length}</h3>
                                                     <h6 className="mb-0">Posts</h6>
                                                 </div>
                                             </div>
@@ -180,11 +138,12 @@ function Dashboard() {
                                     <div className="col-sm-6 col-lg-3">
                                         <div className="card card-body border p-3">
                                             <div className="d-flex align-items-center">
-                                                <div className="icon-xl fs-1 p-3 bg-info bg-opacity-10 rounded-3 text-info">
+                                                <div className="icon-xl fs-1 p-3 bg-info bg-opacity-10 rounded-3 text-info"
+                                                    onClick={() => navigate(`/bookmarks/`)}>
                                                     <i className="bi bi-tag" />
                                                 </div>
                                                 <div className="ms-3">
-                                                    <h3>{stats.bookmarks}</h3>
+                                                    <h3>{bookmarks?.length}</h3>
                                                     <h6 className="mb-0">Bookmarks</h6>
                                                 </div>
                                             </div>
@@ -193,11 +152,12 @@ function Dashboard() {
                                     <div className="col-sm-6 col-lg-3">
                                         <div className="card card-body border p-3">
                                             <div className="d-flex align-items-center">
-                                                <div className="icon-xl fs-1 p-3 bg-primary bg-opacity-10 rounded-3 text-primary">
+                                                <div className="icon-xl fs-1 p-3 bg-primary bg-opacity-10 rounded-3 text-primary"
+                                                    onClick={() => navigate(`/dashboard/following`)}>
                                                     <i className="bi bi-people" />
                                                 </div>
-                                                <div className="ms-3" onClick={() => navigate(`/dashboard/following`)} >
-                                                    <h3>{stats.posts}</h3>
+                                                <div className="ms-3"  >
+                                                    <h3>{following.length}</h3>
                                                     <h6 className="mb-0">Following</h6>
                                                 </div>
                                             </div>
@@ -208,7 +168,7 @@ function Dashboard() {
                             <div className="col-md-6 col-xxl-4">
                                 <div className="card border h-100">
                                     <div className="card-header border-bottom d-flex justify-content-between align-items-center  p-3">
-                                        <h5 className="card-header-title mb-0">All Posts ({stats.posts})</h5>
+                                        <h5 className="card-header-title mb-0">All Posts ({posts.length})</h5>
                                         <div className="dropdown text-end">
                                             <a href="#" className="btn border-0 p-0 mb-0" role="button" id="dropdownShare3" data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i className="bi bi-grid-fill text-danger fa-fw" />
@@ -223,9 +183,9 @@ function Dashboard() {
                                                         <div className="d-flex position-relative">
                                                             <img className="w-60 rounded" src={p.image} style={{ width: "100px", height: "110px", objectFit: "cover", borderRadius: "10px" }} alt="product" />
                                                             <div className="ms-3">
-                                                                <a href="#" className="h6 stretched-link text-decoration-none text-dark">
+                                                                <Link to={`/${p.slug}/`} className="h6 stretched-link text-decoration-none text-dark">
                                                                     {p.title}
-                                                                </a>
+                                                                </Link>
                                                                 <p className="small mb-0 mt-3">
                                                                     <i className="fas fa-calendar me-2"></i>
                                                                     {moment(p.date).format("DD MMM, YYYY")}
@@ -256,7 +216,7 @@ function Dashboard() {
                             <div className="col-md-6 col-xxl-4">
                                 <div className="card border h-100">
                                     <div className="card-header border-bottom d-flex justify-content-between align-items-center  p-3">
-                                        <h5 className="card-header-title mb-0">Booksmarks ({bookmarks?.length})</h5>
+                                        <h5 className="card-header-title mb-0">Bookmarks ({bookmarks?.length})</h5>
                                         <div className="dropdown text-end">
                                             <a href="#" className="btn border-0 p-0 mb-0" role="button" id="dropdownShare3" data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i className="bi bi-chat-left-quote-fill text-success fa-fw" />
@@ -265,9 +225,9 @@ function Dashboard() {
                                     </div>
                                     <div className="card-body p-3">
                                         <div className="row">
-                                            {bookmarks?.slice(0, 3).map((bookmark, index) => (
-                                                <>
-                                                    <div className="col-12">
+                                            {bookmarks?.slice(0, 4).map((bookmark, index) => (
+                                                <  >
+                                                    <div className="col-12" key={index}>
                                                         <div className="d-flex align-items-center position-relative">
                                                             <img
                                                                 className="rounded"
@@ -279,7 +239,7 @@ function Dashboard() {
                                                                 <p className="mb-1">
                                                                     <Link
                                                                         className="h6 stretched-link text-decoration-none text-dark"
-                                                                        to={`/post/${bookmark.post?.id}/`}
+                                                                        to={`/${bookmark.post?.slug}/`}
                                                                     >
                                                                         {bookmark.post?.title}
                                                                     </Link>
@@ -307,7 +267,7 @@ function Dashboard() {
                             <div className="col-md-6 col-xxl-4">
                                 <div className="card border h-100">
                                     <div className="card-header border-bottom d-flex justify-content-between align-items-center  p-3">
-                                        <h5 className="card-header-title mb-0">Notifications</h5>
+                                        <h5 className="card-header-title mb-0">Notifications ({noti.length}) </h5>
                                         <div className="dropdown text-end">
                                             <a href="#" className="btn border-0 p-0 mb-0" role="button" id="dropdownShare3" data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i className="fas fa-bell text-warning fa-fw" />
@@ -317,7 +277,7 @@ function Dashboard() {
                                     <div className="card-body p-3">
                                         <div className="custom-scrollbar h-350">
                                             <div className="row">
-                                                {noti?.slice(0, 3)?.map((n, index) => (
+                                                {noti?.slice(0, 4)?.map((n, index) => (
                                                     <>
                                                         <div className="col-12">
                                                             <div className="d-flex justify-content-between position-relative">
@@ -344,8 +304,7 @@ function Dashboard() {
                                                                                 </p>
                                                                             )}
                                                                         </div>
-                                                                        <span className="small">5 min ago</span> {"  "}
-                                                                        {/* <br /> */}
+                                                                        <span className="small">Mark as read</span> {"  "}
                                                                         <button onClick={() => handleMarkNotiAsSeen(n.id)} className="btn btn-secondary mt-2">
                                                                             <i className="fas fa-check-circle"></i>
                                                                         </button>
@@ -394,10 +353,13 @@ function Dashboard() {
                                                             Views
                                                         </th>
                                                         <th scope="col" className="border-0">
-                                                            Published Date
+                                                            Likes
                                                         </th>
                                                         <th scope="col" className="border-0">
-                                                            Likes
+                                                            Bookmarks
+                                                        </th>
+                                                        <th scope="col" className="border-0">
+                                                            Published Date
                                                         </th>
                                                         <th scope="col" className="border-0">
                                                             Status
@@ -409,24 +371,30 @@ function Dashboard() {
                                                 </thead>
                                                 <tbody className="border-top-0">
                                                     {posts?.map((p, index) => (
-                                                        <tr>
-
+                                                        <tr  >
                                                             <td>
                                                                 <h6 className="mt-2 mt-md-0 mb-0 ">
-                                                                    <a href="#" className="text-dark text-decoration-none">
+                                                                    <Link to={`/${p.slug}/`} className="text-dark text-decoration-none">
                                                                         {p?.title}
-                                                                    </a>
+                                                                    </Link>
                                                                 </h6>
                                                             </td>
                                                             <td>
                                                                 <h6 className="mb-0">
-                                                                    <a href="#" className="text-dark text-decoration-none">
-                                                                        {p.view} Views
-                                                                    </a>
+                                                                    <span className="text-dark text-decoration-none">
+                                                                        {p.view}
+                                                                    </span>
+                                                                </h6>
+                                                            </td>
+                                                            <td>{p.likes_count}<i className="fas fa-thumbs-up text-primary ms-1"></i></td>
+                                                            <td>
+                                                                <h6 className="mb-0 text-center">
+                                                                    <span className="text-dark text-decoration-none text-center">
+                                                                        {p.bookmarks.length}
+                                                                    </span>
                                                                 </h6>
                                                             </td>
                                                             <td>{moment(p.date).format("DD MMM, YYYY")}</td>
-                                                            <td>{p.likes_count}</td>
                                                             <td>
                                                                 <span className="badge bg-dark bg-opacity-10 text-dark mb-2">{p.status}</span>
                                                             </td>
@@ -439,10 +407,6 @@ function Dashboard() {
                                                                         <i className="bi bi-trash" />
                                                                     </button>
 
-
-                                                                    {/* <Link to={`/edit-post/3/2`} className="btn btn-primary btn-round mb-0" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
-                                                                    <i className="bi bi-pencil-square" />
-                                                                </Link> */}
                                                                 </div>
                                                             </td>
                                                         </tr>

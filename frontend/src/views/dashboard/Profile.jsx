@@ -3,11 +3,13 @@ import Header from "../partials/Header";
 import Footer from "../partials/Footer";
 import { Link } from "react-router-dom";
 
-import apiInstance from "../../utils/axios";
+// import apiInstance from "../../utils/axios";
 import useUserData from "../../plugin/useUserData";
 import Toast from "../../plugin/Toast";
+import useAxios from "../../utils/useAxios";
 
 function Profile() {
+    const apiInstance = useAxios();
     const [profileData, setProfileData] = useState({
         image: null,
         full_name: "",
@@ -97,9 +99,14 @@ function Profile() {
                             {/* Card */}
                             <div className="card">
                                 {/* Card header */}
-                                <div className="card-header">
-                                    <h3 className="mb-0">Profile Details</h3>
-                                    <p className="mb-0">You have full control to manage your own account setting.</p>
+                                <div className="card-header d-flex align-items-center justify-content-between">
+                                    <span>
+                                        <h3 className="mb-0">Profile Details</h3>
+                                        <p className="mb-0">You have full control to manage your own account setting.</p>
+                                    </span>
+                                    <Link to="/change-password/" className="btn btn-primary">
+                                        Change Password
+                                    </Link>
                                 </div>
                                 {/* Card body */}
                                 <form className="card-body" onSubmit={handleFormSubmit}>

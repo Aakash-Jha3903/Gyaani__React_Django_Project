@@ -4,6 +4,9 @@ import axios from "./axios";
 import jwt_decode from "jwt-decode";
 import Cookies from "js-cookie";
 import Swal from "sweetalert2";
+import apiInstance from "./axios";
+import useAxios from "./useAxios";
+import { API_BASE_URL } from "./constants";
 
 const Toast = Swal.mixin({
     toast: true,
@@ -11,10 +14,14 @@ const Toast = Swal.mixin({
     showConfirmButton: false,
     timer: 1500,
     timerProgressBar: true,
+    
 });
 
 export const login = async (email, password) => {
     try {
+        
+        console.log("Sending login request..."); // Debugging
+        
         const { data, status } = await axios.post("user/token/", {
             email,
             password,
@@ -22,6 +29,9 @@ export const login = async (email, password) => {
 
         // If the request is successful (status code 200), set authentication user and display success toast
         if (status === 200) {
+            
+            console.log("Login response received:", data); // Debugging
+           
             setAuthUser(data.access, data.refresh);
 
             Toast.fire({
@@ -31,6 +41,9 @@ export const login = async (email, password) => {
         }
         return { data, error: null };
     } catch (error) {
+
+        console.error("Login API error:", error.response?.data || error.message); // Debugging
+        
         return {
             data: null,
             error: error.response.data?.detail || "Something went wrong",

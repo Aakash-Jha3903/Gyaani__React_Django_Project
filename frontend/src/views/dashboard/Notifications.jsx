@@ -3,11 +3,13 @@ import Header from "../partials/Header";
 import Footer from "../partials/Footer";
 import { Link } from "react-router-dom";
 
-import apiInstance from "../../utils/axios";
+// import apiInstance from "../../utils/axios";
 import useUserData from "../../plugin/useUserData";
 import Toast from "../../plugin/Toast";
+import useAxios from "../../utils/useAxios";
 
 function Notifications() {
+    const apiInstance = useAxios();
     const [noti, setNoti] = useState([]);
     const userId = useUserData()?.user_id;
 
@@ -71,7 +73,7 @@ function Notifications() {
                                                                             </p>
                                                                         )}
                                                                     </p>
-                                                                    <span className="small">5 min ago</span>
+                                                                    <span className="small">Mark as read</span>
                                                                     <br />
                                                                     <button onClick={() => handleMarkNotiAsSeen(n.id)} className="btn btn-secondary mt-2">
                                                                         <i className="fas fa-check-circle"></i>

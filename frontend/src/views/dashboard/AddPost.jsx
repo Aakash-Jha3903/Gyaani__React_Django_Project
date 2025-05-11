@@ -3,15 +3,17 @@ import Header from "../partials/Header";
 import Footer from "../partials/Footer";
 import { Link, useNavigate } from "react-router-dom";
 
-import apiInstance from "../../utils/axios";
+// import apiInstance from "../../utils/axios";
 import useUserData from "../../plugin/useUserData";
 import Toast from "../../plugin/Toast";
 import Swal from "sweetalert2";
 
 import JoditEditor from "jodit-react"
 import { useRef } from "react"
+import useAxios from "../../utils/useAxios";
 
 function AddPost() {
+    const apiInstance = useAxios();
     const [post, setCreatePost] = useState({ image: "", title: "", description: "", category: parseInt(""), tags: "", status: "" });
     const [imagePreview, setImagePreview] = useState("");
     const [categoryList, setCategoryList] = useState([]);
@@ -125,18 +127,10 @@ function AddPost() {
                                             <div className="offset-lg-1 col-lg-10 col-md-12 col-12">
                                                 <div className="d-lg-flex align-items-center justify-content-between">
                                                     <div className="mb-4 mb-lg-0">
-                                                        <h1 className="text-white mb-1">Create Blog Post</h1>
+                                                        <h1 className="text-white mb-1">Create your Blog Post</h1>
                                                         <p className="mb-0 text-white lead">Use the article builder below to write your article.</p>
                                                     </div>
-                                                    <div>
-                                                        <Link to="/instructor/posts/" className="btn" style={{ backgroundColor: "white" }}>
-                                                            {" "}
-                                                            <i className="fas fa-arrow-left"></i> Back to Posts
-                                                        </Link>
-                                                        <a href="instructor-posts.html" className="btn btn-dark ms-2">
-                                                            Save Changes <i className="fas fa-check-circle"></i>
-                                                        </a>
-                                                    </div>
+                                                    
                                                 </div>
                                             </div>
                                         </div>

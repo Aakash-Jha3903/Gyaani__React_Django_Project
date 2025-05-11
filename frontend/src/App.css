@@ -1,42 +1,54 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Spinner code start  */
+.spinner-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #fdfcfb;
+    font-family: 'Segoe UI', sans-serif;
+    color: #444;
   }
-  to {
-    transform: rotate(360deg);
+  
+  .typing-dots {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
   }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  
+  .typing-dots span {
+    width: 16px;
+    height: 16px;
+    background-color: #3498db;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
   }
-}
+  
+  .typing-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+  .typing-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+  .typing-dots span:nth-child(3) {
+    animation-delay: 0s;
+  }
+  
+  @keyframes bounce {
+    0%, 80%, 100% {
+      transform: scale(0);
+    } 
+    40% {
+      transform: scale(1);
+    }
+  }
 
-.card {
-  padding: 2em;
+/* App.css for details.jsx (comments) */  
+.comment-box, .reply-box {
+    word-wrap: break-word; 
+    overflow-wrap: break-word; 
+    white-space: normal; 
+    max-width: 50vw;
 }
-
-.read-the-docs {
-  color: #888;
-}
+  

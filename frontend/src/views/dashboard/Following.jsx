@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
-import apiInstance from "../../utils/axios";
+// import apiInstance from "../../utils/axios";
 import Toast from "../../plugin/Toast";
 import useUserData from "../../plugin/useUserData";
 import { SERVER_URL } from '../../utils/constants';
 
 import Header from "../partials/Header";
 import Footer from "../partials/Footer";
+import useAxios from "../../utils/useAxios";
 
 function Following() {
+    const apiInstance = useAxios();
     const [following, setFollowing] = useState([]);
     const [unfollowedAuthors, setUnfollowedAuthors] = useState([]); // Temporarily track unfollowed authors
     const userId = useUserData()?.user_id;
@@ -74,7 +76,7 @@ function Following() {
     return (
         <>
             <Header />
-            <div className="following-page">
+            <div className="following-page p-5">
                 <h1>Following</h1>
                 {following.length > 0 ? (
                     <ul className="list-group">

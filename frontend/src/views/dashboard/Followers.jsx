@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
-import apiInstance from "../../utils/axios";
+// import apiInstance from "../../utils/axios";
 import Toast from "../../plugin/Toast";
 import useUserData from "../../plugin/useUserData";
 import { SERVER_URL } from "../../utils/constants";
 
 import Header from "../partials/Header";
 import Footer from "../partials/Footer";
+import useAxios from "../../utils/useAxios";
 
 function Followers() {
+    const apiInstance = useAxios();
     const [followers, setFollowers] = useState([]); // List of followers
     const userId = useUserData()?.user_id;
 
@@ -27,7 +29,7 @@ function Followers() {
     return (
         <>
             <Header />
-            <div className="followers-page">
+            <div className="followers-page p-5">
                 <h1>Followers</h1>
                 {followers.length > 0 ? (
                     <ul className="list-group">

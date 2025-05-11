@@ -5,12 +5,15 @@ import { Link } from "react-router-dom";
 import Header from '../partials/Header'
 import Footer from '../partials/Footer'
 import apiInstance from "../../utils/axios";
+import useAxios from '../../utils/useAxios';
 
 
 const AllCategory = () => {
+    const axiosInstance = useAxios();
     const [category, setCategory] = useState([]);
     const fetchCategory = async () => {
-        const response = await apiInstance.get(`post/category/list/`);
+        // const response = await apiInstance.get(`post/category/list/`);
+        const response = await axiosInstance.get(`post/category/list/`);
         setCategory(response.data);
     };
 

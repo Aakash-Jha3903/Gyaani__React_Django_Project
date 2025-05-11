@@ -1,32 +1,36 @@
-import axios from 'axios';
-import { getRefreshToken, isAccessTokenExpired, setAuthUser } from './auth'; 
-import { API_BASE_URL } from './constants'; 
-import Cookies from 'js-cookie'; 
+import axios from "axios";
+import { getRefreshToken, isAccessTokenExpired, setAuthUser } from "./auth";
+import { API_BASE_URL } from "./constants";
+import Cookies from "js-cookie";
 
 const useAxios = () => {
-    const accessToken = Cookies.get('access_token');
-    const refreshToken = Cookies.get('refresh_token');
-
     const axiosInstance = axios.create({
         baseURL: API_BASE_URL,
-        headers: { Authorization: `Bearer ${accessToken}` },
     });
 
     axiosInstance.interceptors.request.use(async (req) => {
-        if (!isAccessTokenExpired(accessToken)) {
-            return req; // If not expired, return the original request
+        let accessToken = Cookies.get("access_token");
+        const refreshToken = Cookies.get("refresh_token");
+
+        // Check if the access token is expired
+        if (isAccessTokenExpired(accessToken)) {
+            try {
+                // Refresh the access token
+                const response = await getRefreshToken(refreshToken);
+                accessToken = response.access;
+                setAuthUser(response.access, response.refresh);
+            } catch (error) {
+                console.error("Error refreshing token:", error);
+                throw error; // Handle token refresh failure
+            }
         }
 
-        // If the access token is expired, refresh it
-        const response = await getRefreshToken(refreshToken);
-        setAuthUser(response.access, response.refresh);
-
-        // Update the request's 'Authorization' header with the new access token
-        req.headers.Authorization = `Bearer ${response?.data?.access}`;
+        // Attach the Authorization header
+        req.headers.Authorization = `Bearer ${accessToken}`;
         return req;
     });
 
-    return axiosInstance; 
+    return axiosInstance;
 };
 
-export default useAxios; 
+export default useAxios;

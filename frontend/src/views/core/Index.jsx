@@ -4,11 +4,13 @@ import Footer from "../partials/Footer";
 import { Link } from "react-router-dom";
 import moment from "moment";
 
-import apiInstance from "../../utils/axios";
+// import apiInstance from "../../utils/axios";
 import useUserData from "../../plugin/useUserData";
 import Toast from "../../plugin/Toast";
+import useAxios from "../../utils/useAxios";
 
 function Index() {
+    const apiInstance = useAxios();
     const [posts, setPosts] = useState([]);
     const [popularPosts, setPopularPosts] = useState([]);
     const [trendingPosts, setTrendingPosts] = useState([]);
@@ -19,10 +21,6 @@ function Index() {
         setPosts(response.data);
     };
 
-    const fetchPopularPost = () => {
-        const sortedPopularPost = [...posts]?.sort((a, b) => b.likes - a.likes);
-        setPopularPosts(sortedPopularPost);
-    };
     const fetchTrendingPosts = () => {
         const sortedTrendingPost = [...posts]?.sort((a, b) => b.view - a.view);
         setTrendingPosts(sortedTrendingPost);
@@ -36,12 +34,17 @@ function Index() {
             .sort((a, b) => b.post_count - a.post_count); // Sort in descending order of post count
         setCategory(filteredCategories);
     };
+    
+    const fetchPopularPost = () => {
+        const sortedPopularPost = [...posts]?.sort((a, b) => b.likes - a.likes);
+        setPopularPosts(sortedPopularPost);
+    };
 
     useEffect(() => {
         fetchPosts();
         fetchCategory();
     }, []);
-
+    
     useEffect(() => {
         fetchPopularPost();
         fetchTrendingPosts();
@@ -101,8 +104,8 @@ function Index() {
                 <div className="container">
                     <div className="row">
                         {trendingItems?.map((p, index) => (
-                            <div className="col-sm-6 col-lg-3" key={index}>
-                                <div className="card mb-4">
+                            <div className="col-sm-6 col-lg-3 " key={index}>
+                                <div className="card mb-2" style={{ height: "400px", overflow: "hidden" }}> 
                                     <div className="card-fold position-relative">
                                         <img className="card-img" style={{ width: "100%", height: "160px", objectFit: "cover" }} src={p.image} alt={p.title} />
                                     </div>

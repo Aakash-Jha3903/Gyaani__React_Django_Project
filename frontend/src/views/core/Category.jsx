@@ -6,13 +6,16 @@ import moment from "moment";
 import apiInstance from "../../utils/axios";
 
 import React from "react";
+import useAxios from "../../utils/useAxios";
 
 function Category() {
+    const axiosInstance = useAxios();
     const [posts, setPosts] = useState([]);
     const param = useParams();
 
     const fetchPosts = async () => {
-        const response = await apiInstance.get(`post/category/posts/${param.slug}/`);
+        const response = await axiosInstance.get(`post/category/posts/${param.slug}/`);
+        // const response = await apiInstance.get(`post/category/posts/${param.slug}/`);
         setPosts(response.data);
     };
     useEffect(() => {

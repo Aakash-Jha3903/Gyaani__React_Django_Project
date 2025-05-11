@@ -8,8 +8,10 @@ import moment from "moment";
 import Toast from "../../plugin/Toast";
 import useUserData from "../../plugin/useUserData";
 import '../../App.css';
+import useAxios from "../../utils/useAxios";
 
 function Detail() {
+    const axiosInstance = useAxios();
     const { slug } = useParams();
     const navigate = useNavigate();
     const [post, setPost] = useState([]);
@@ -21,8 +23,10 @@ function Detail() {
 
     const [isFollowing, setIsFollowing] = useState(false);
     const [loadingFollow, setLoadingFollow] = useState(false);
-    const [following, setFollowing] = useState([]); 
+    const [following, setFollowing] = useState([]);
 
+    const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
+    const [isLiked, setIsLiked] = useState(false);
 
     const userData = useUserData();
     const userId = userData?.user_id;
@@ -32,27 +36,42 @@ function Detail() {
     // Fetch the post details
     const fetchPost = async () => {
         try {
-            const response = await apiInstance.get(`post/detail/${slug}/`);
-            // console.log(JSON.stringify(response.data));
+            const response = await axiosInstance.get(`post/detail/${slug}/`);
+            // console.log(JSON.stringify(response.data))
             setPost(response.data);
             setTags(response.data.tags.split(',').map(tag => tag.trim()));
 
             // Check if the logged-in user is following the post author
-            const followStatusResponse = await apiInstance.get(`/user/following/${userId}/`);
+            const followStatusResponse = await axiosInstance.get(`/user/following/${userId}/`);
             const isFollowingAuthor = followStatusResponse.data.some(
-                (follow) => follow.following === response.data.user?.id
+                (follow) => follow.following.id === response.data.user?.id
             );
             setIsFollowing(isFollowingAuthor);
+
+            // Check if the post is liked by the user in the past 
+            setIsLiked(response.data.likes?.includes(userId));
+            // Check if the post is bookmarked by the user in the past 
+            setIsBookmarked(response.data.bookmarks?.includes(userId));
+
         } catch (error) {
             console.error("Error fetching post:", error);
         }
     };
+    const incrementViewCount = async () => {
+        try {
+            await axiosInstance.post(`/post/increment-view/${slug}/`);
+        } catch (error) {
+            console.error("Error incrementing view count:", error);
+        }
+    };
     useEffect(() => {
         fetchPost();
+        incrementViewCount();
     }, [slug]);
-    useEffect(() => {
-        fetchPost();
-    }, []);
+    // useEffect(() => {
+        // fetchPost();
+        // incrementViewCount();
+    // }, []);
 
     const handleFollow = async () => {
         if (!userId || !post.user?.id) {
@@ -67,7 +86,7 @@ function Detail() {
 
         setLoadingFollow(true);
         try {
-            await apiInstance.post("/user/follow/", {
+            await axiosInstance.post("/user/follow/", {
                 follower_id: userId,
                 following_id: post.user?.id,
             });
@@ -83,13 +102,12 @@ function Detail() {
 
 
     const handleUnfollow = async (followingId) => {
-        console.log("Unfollow Payload:", { follower_id: userId, following_id: followingId }); // Debugging
         try {
-            await apiInstance.post("/user/unfollow/", { follower_id: userId, following_id: followingId });
+            await axiosInstance.post("/user/unfollow/", { follower_id: userId, following_id: followingId });
             Toast("success", "Unfollowed successfully!");
 
             // Refresh the following data
-            const updatedFollowing = await apiInstance.get(`/user/following/${userId}/`);
+            const updatedFollowing = await axiosInstance.get(`/user/following/${userId}/`);
             setFollowing(updatedFollowing.data); // Update the following state
             setIsFollowing(false); // Update the follow status
         } catch (error) {
@@ -121,7 +139,7 @@ function Detail() {
         };
 
         try {
-            const response = await apiInstance.post(`post/comment-post/`, jsonData);
+            const response = await axiosInstance.post(`post/comment-post/`, jsonData);
             Toast("success", "Comment Posted.", "");
             setCreateComment({
                 full_name: "",
@@ -156,7 +174,7 @@ function Detail() {
         };
 
         try {
-            const response = await apiInstance.post(`/post/reply-comment/`, jsonData);
+            const response = await axiosInstance.post(`/post/reply-comment/`, jsonData);
             Toast("success", "Reply Posted.", "");
 
             // Update the local state to include the new reply without re-fetching the entire post
@@ -196,8 +214,6 @@ function Detail() {
         }));
     };
 
-    const [likesCount, setLikesCount] = useState(post.likes?.length || 0);
-    const [isLiked, setIsLiked] = useState(false);
     useEffect(() => {
         if (post.likes?.includes(userId)) {
             setIsLiked(true);
@@ -212,7 +228,7 @@ function Detail() {
         }
 
         try {
-            const response = await apiInstance.post("/post/like-post/", {
+            const response = await axiosInstance.post("/post/like-post/", {
                 user_id: userId,
                 post_id: post.id,
             });
@@ -245,16 +261,24 @@ function Detail() {
         }
 
         try {
-            const response = await apiInstance.post("/post/bookmark-post/", {
+            const response = await axiosInstance.post("/post/bookmark-post/", {
                 user_id: userId,
                 post_id: post.id,
             });
 
             if (response.data.message === "Post Bookmarked") {
                 setIsBookmarked(true);
+                setPost((prevPost) => ({
+                    ...prevPost,
+                    bookmarks: [...prevPost.bookmarks, userId], // Add the user ID to the bookmarks array
+                }));
                 Toast("success", "Post bookmarked.");
             } else if (response.data.message === "Post Un-Bookmarked") {
                 setIsBookmarked(false);
+                setPost((prevPost) => ({
+                    ...prevPost,
+                    bookmarks: prevPost.bookmarks.filter((id) => id !== userId), // Remove the user ID from the bookmarks array
+                }));
                 Toast("success", "Post unbookmarked.");
             }
         } catch (error) {
@@ -333,7 +357,8 @@ function Detail() {
                                         <i className="fas fa-clock"></i> 7 min read
                                     </li>
                                     <li className="list-inline-item d-lg-block my-lg-2 text-start" >
-                                        <span className={` text-body btn btn-link p-0 text-primary ${isLiked ? "liked" : ""}`} onClick={handleLikePost}>
+                                        <span className={` text-body btn btn-link p-0 text-primary ${isLiked ? "liked" : ""}`}
+                                            onClick={handleLikePost}>
                                             <i className={`fas fa-heart me-1 ${isLiked ? "text-danger" : ""}`} />
                                         </span>
                                         {likesCount} Likes
@@ -343,7 +368,7 @@ function Detail() {
                                             className={`text-decoration-none btn btn-link p-0 text-dark ${isBookmarked ? "bookmarked" : ""}`}
                                             onClick={handleBookmarkPost}
                                         >
-                                            <i className={`fas fa-bookmark me-1 ${isBookmarked ? "text-warning" : ""}`}></i>
+                                            <i className={`fas fa-bookmark me-1 ${isBookmarked ? "text-warning" : ""}`}></i> {post.bookmarks?.length}{" "}
                                             {isBookmarked ? "Bookmarked" : "Bookmark"}
                                         </span>
                                     </li>

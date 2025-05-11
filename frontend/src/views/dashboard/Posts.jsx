@@ -3,11 +3,13 @@ import Header from "../partials/Header";
 import Footer from "../partials/Footer";
 import { Link } from "react-router-dom";
 
-import apiInstance from "../../utils/axios";
+// import apiInstance from "../../utils/axios";
 import useUserData from "../../plugin/useUserData";
 import moment from "moment";
+import useAxios from "../../utils/useAxios";
 
 function Posts() {
+    const apiInstance = useAxios();
     const [posts, setPosts] = useState([]);
     const [filteredPosts, setFilteredPosts] = useState([]);
     const userId = useUserData()?.user_id;
@@ -107,10 +109,13 @@ function Posts() {
                                                         Views
                                                     </th>
                                                     <th scope="col" className="border-0">
-                                                        Published Date
+                                                        Likes   
                                                     </th>
                                                     <th scope="col" className="border-0">
-                                                        Likes
+                                                        Bookmarks   
+                                                    </th>
+                                                    <th scope="col" className="border-0">
+                                                        Published Date
                                                     </th>
                                                     <th scope="col" className="border-0">
                                                         Status
@@ -142,8 +147,9 @@ function Posts() {
                                                                 </a>
                                                             </h6>
                                                         </td>
+                                                        <td>{p.likes_count}<i className="fas fa-thumbs-up text-primary ms-1"></i> </td>
+                                                        <td className="text-center" >{p.bookmarks.length}</td>
                                                         <td>{moment(p.date).format("DD MMM, YYYY")}</td>
-                                                        <td>{p.likes_count}</td>
                                                         <td>
                                                             <span className="badge bg-dark bg-opacity-10 text-dark mb-2">{p.status}</span>
                                                         </td>

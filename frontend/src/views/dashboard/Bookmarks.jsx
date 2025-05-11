@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
-import apiInstance from "../../utils/axios";
+// import apiInstance from "../../utils/axios";
 import useUserData from "../../plugin/useUserData";
 import { Link } from "react-router-dom";
 import { SERVER_URL } from "../../utils/constants";
 import Toast from "../../plugin/Toast";
 import Header from "../partials/Header";
 import Footer from "../partials/Footer";
+import useAxios from "../../utils/useAxios";
 
 function Bookmarks() {
+    const apiInstance = useAxios();
     const [bookmarks, setBookmarks] = useState([]);
     const userId = useUserData()?.user_id;
 

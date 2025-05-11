@@ -3,15 +3,17 @@ import Header from "../partials/Header";
 import Footer from "../partials/Footer";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import apiInstance from "../../utils/axios";
+// import apiInstance from "../../utils/axios";
 import useUserData from "../../plugin/useUserData";
 import Toast from "../../plugin/Toast";
 import Swal from "sweetalert2";
 
 import JoditEditor from "jodit-react";
 import { useRef } from "react";
+import useAxios from "../../utils/useAxios";
 
 function EditPost() {
+    const apiInstance = useAxios();
     const [post, setEditPost] = useState({ image: "", title: "", description: "", category: parseInt(""), tags: "", status: "" });
     const [imagePreview, setImagePreview] = useState("");
     const [categoryList, setCategoryList] = useState([]);

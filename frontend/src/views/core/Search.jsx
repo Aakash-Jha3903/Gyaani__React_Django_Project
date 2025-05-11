@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import Header from "../partials/Header";
 import Footer from "../partials/Footer";
 import { Link } from "react-router-dom";
-import apiInstance from "../../utils/axios";
+// import apiInstance from "../../utils/axios";
 import moment from "moment";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import useAxios from "../../utils/useAxios";
 
 function Search() {
+    const apiInstance = useAxios();
     const [searchInput, setsearchInput] = useState("");
     const [searchResults, setSearchResults] = useState([]);
     const [allPosts, setAllPosts] = useState([]);
