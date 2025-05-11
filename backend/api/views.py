@@ -13,7 +13,7 @@ from rest_framework.decorators import api_view, APIView, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import generics
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny ,IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from drf_yasg.utils import swagger_auto_schema
@@ -24,6 +24,7 @@ from django.db.models import Q
 # Others
 import json
 import random
+from random import randint
 
 # Custom Imports
 from api import serializer as api_serializer
@@ -31,21 +32,16 @@ from api import models as api_models
 
 
 class MyTokenObtainPairView(TokenObtainPairView):
-    # Here, it specifies the serializer class to be used with this view.
     serializer_class = api_serializer.MyTokenObtainPairSerializer  
 
 class RegisterView(generics.CreateAPIView):
-    # It sets the queryset for this view to retrieve all User objects.
     queryset = api_models.User.objects.all()
-    # It specifies that the view allows any user (no authentication required).
     permission_classes = (AllowAny,)
-    # It sets the serializer class to be used with this view.
     serializer_class = api_serializer.RegisterSerializer
 
 
-# This code defines another DRF View class called ProfileView, which inherits from generics.RetrieveAPIView and used to show user profile view.
 class ProfileView(generics.RetrieveUpdateAPIView):
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
     serializer_class = api_serializer.ProfileSerializer
 
     def get_object(self):
@@ -56,80 +52,82 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         return profile
     
 
-def generate_numeric_otp(length=7):
-        # Generate a random 7-digit OTP
-        otp = ''.join([str(random.randint(0, 9)) for _ in range(length)])
-        return otp
+class SendPasswordResetOTPAPIView(APIView):
+    permission_classes = [AllowAny]
 
-class PasswordEmailVerify(generics.RetrieveAPIView):
-    permission_classes = (AllowAny,)
-    serializer_class = api_serializer.UserSerializer
-    
-    def get_object(self):
-        email = self.kwargs['email']
-        user = api_models.User.objects.get(email=email)
-        
-        if user:
-            user.otp = generate_numeric_otp()
-            uidb64 = user.pk
-            
-             # Generate a token and include it in the reset link sent via email
-            refresh = RefreshToken.for_user(user)
-            reset_token = str(refresh.access_token)
+    def post(self, request):
+        email = request.data.get("email")
+        if not email:
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Store the reset_token in the user model for later verification
-            user.reset_token = reset_token
+        try:
+            user = api_models.User.objects.get(email=email)
+            otp = randint(1000, 9999)  # Generate a 4-digit OTP
+            user.otp = str(otp)
             user.save()
 
-            link = f"http://localhost:5173/create-new-password?otp={user.otp}&uidb64={uidb64}&reset_token={reset_token}"
-            
-            merge_data = {
-                'link': link, 
-                'username': user.username, 
-            }
-            subject = f"Password Reset Request"
-            text_body = render_to_string("email/password_reset.txt", merge_data)
-            html_body = render_to_string("email/password_reset.html", merge_data)
-            
-            msg = EmailMultiAlternatives(
-                subject=subject, from_email=settings.FROM_EMAIL,
-                to=[user.email], body=text_body
-            )
-            msg.attach_alternative(html_body, "text/html")
-            msg.send()
-        return user
-    
+            # Send OTP to user's email
+            subject = "Password Reset OTP"
+            message = f"Your OTP for password reset is: {otp}"
+            user.email_user(subject, message)
 
-class PasswordChangeView(generics.CreateAPIView):
-    permission_classes = (AllowAny,)
-    serializer_class = api_serializer.UserSerializer
-    
-    def create(self, request, *args, **kwargs):
-        payload = request.data
-        
-        otp = payload['otp']
-        uidb64 = payload['uidb64']
-        password = payload['password']
+            return Response({"message": "OTP sent to email"}, status=status.HTTP_200_OK)
+        except api_models.User.DoesNotExist:
+            return Response({"error": "User with this email does not exist"}, status=status.HTTP_404_NOT_FOUND)
 
-        
+class ResetPasswordWithOTPAPIView(APIView):
+    permission_classes = [AllowAny]
 
-        user = api_models.User.objects.get(id=uidb64, otp=otp)
-        if user:
-            user.set_password(password)
-            user.otp = ""
+    def post(self, request):
+        email = request.data.get("email")
+        otp = request.data.get("otp")
+        new_password = request.data.get("new_password")
+
+        if not email or not otp or not new_password:
+            return Response({"error": "Email, OTP, and new password are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = api_models.User.objects.get(email=email, otp=otp)
+            user.set_password(new_password)
+            user.otp = ""  # Clear the OTP after successful reset
             user.save()
-            
-            return Response( {"message": "Password Changed Successfully"}, status=status.HTTP_201_CREATED)
-        else:
-            return Response( {"message": "An Error Occured"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+            return Response({"message": "Password reset successfully"}, status=status.HTTP_200_OK)
+        except api_models.User.DoesNotExist:
+            return Response({"error": "Invalid OTP or email"}, status=status.HTTP_400_BAD_REQUEST)
 
+class ChangePasswordAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
-#-------------------------------------- Post APIs ----------------------------------------------
+    def post(self, request):
+        
+        print("Authorization Header:", request.headers.get("Authorization"))  # Debugging
+        print("Authenticated User:", request.user)  # Debugging
+
+        user_id = request.data.get("user_id")
+        print("user_id : ",user_id)
+        current_password = request.data.get("current_password")
+        new_password = request.data.get("new_password")
+
+        if not current_password or not new_password:
+            return Response({"error": "Both current and new passwords are required"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = api_models.User.objects.get(id=user_id)
+        except api_models.User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        # Check if the current password is correct
+        if not user.check_password(current_password):
+            return Response({"error": "Current password is incorrect"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update the password
+        user.set_password(new_password)
+        user.save()
+
+        return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)#-------------------------------------- Post APIs ----------------------------------------------
 
 
 class FollowUserAPIView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         follower_id = request.data.get('follower_id')
@@ -152,7 +150,7 @@ class FollowUserAPIView(APIView):
         return Response({"message": "User followed successfully"}, status=status.HTTP_201_CREATED)
     
 class UnfollowUserAPIView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         follower_id = request.data.get('follower_id')  # Get follower ID from request
@@ -176,7 +174,7 @@ class UnfollowUserAPIView(APIView):
 
 
 class FollowingListAPIView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
         try:
@@ -190,7 +188,7 @@ class FollowingListAPIView(APIView):
 
 
 class FollowersListAPIView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
         try:
@@ -227,17 +225,27 @@ class PostListAPIView(generics.ListAPIView):
     
 class PostDetailAPIView(generics.RetrieveAPIView):
     serializer_class = api_serializer.PostSerializer
-    permission_classes = [AllowAny]
 
     def get_object(self):
         slug = self.kwargs['slug']
         post = api_models.Post.objects.get(slug=slug, status="Active")
-        post.view += 1
+        # post.view += 1    
         post.save()
         return post
+    
+class IncrementViewAPIView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request,slug):
+        try:
+            post = api_models.Post.objects.get(slug=slug)
+            post.view += 1
+            post.save()
+            return Response({"message": "View count incremented"}, status=status.HTTP_200_OK)
+        except api_models.Post.DoesNotExist:
+            return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
         
 class LikePostAPIView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -340,11 +348,6 @@ class ReplyToCommentAPIView(APIView):
         serialized_reply = api_serializer.ReplySerializer(reply)
         return Response(serialized_reply.data, status=status.HTTP_201_CREATED)
 
-        
-class BookmarkDetailsAPIView(APIView):
-    pass
-
-
 
 class SearchPostsAPIView(APIView):
     permission_classes = [AllowAny]
@@ -363,7 +366,7 @@ class SearchPostsAPIView(APIView):
     
  
 class BookmarkPostAPIView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -381,8 +384,6 @@ class BookmarkPostAPIView(APIView):
         if not user_id or not post_id:
             return Response({"error": "Invalid data"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # print(f"User ID: {user_id}, Post ID: {post_id}")  
-
         user = api_models.User.objects.get(id=user_id)
         post = api_models.Post.objects.get(id=post_id)
 
@@ -390,14 +391,12 @@ class BookmarkPostAPIView(APIView):
         if bookmark:
             # Remove post from bookmark
             bookmark.delete()
-            print("Bookmark removed")  # Debugging
             return Response({"message": "Post Un-Bookmarked"}, status=status.HTTP_200_OK)
         else:
             api_models.Bookmark.objects.create(
                 user=user,
                 post=post
             )
-            print("Bookmark added")  # Debugging
 
             # Notification
             api_models.Notification.objects.create(
@@ -408,7 +407,7 @@ class BookmarkPostAPIView(APIView):
             return Response({"message": "Post Bookmarked"}, status=status.HTTP_201_CREATED)
 
 class UserBookmarksAPIView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
         bookmarks = api_models.Bookmark.objects.filter(user_id=user_id).select_related('post')
@@ -417,35 +416,10 @@ class UserBookmarksAPIView(APIView):
     
     
 ######################## Author Dashboard APIs ########################
-class DashboardStats(generics.ListAPIView):
-    serializer_class = api_serializer.AuthorStats
-    permission_classes = [AllowAny]
-
-    def get_queryset(self):
-        user_id = self.kwargs['user_id']
-        user = api_models.User.objects.get(id=user_id)
-
-        views = api_models.Post.objects.filter(user=user).aggregate(view=Sum("view"))['view']
-        posts = api_models.Post.objects.filter(user=user).count()
-        likes = api_models.Post.objects.filter(user=user).annotate(like_count=Count('likes')).aggregate(total_likes=Sum('like_count'))['total_likes'] or 0
-        bookmarks = api_models.Bookmark.objects.filter(post__user=user).count()
-
-
-        return [{
-            "views": views,
-            "posts": posts,
-            "likes": likes,
-            "bookmarks": bookmarks,
-        }]
-    
-    def list(self, request, *args, **kwargs):
-        querset = self.get_queryset()
-        serializer = self.get_serializer(querset, many=True)
-        return Response(serializer.data)
 
 class DashboardPostLists(generics.ListAPIView):
     serializer_class = api_serializer.PostSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user_id = self.kwargs['user_id']
@@ -453,16 +427,10 @@ class DashboardPostLists(generics.ListAPIView):
 
         return api_models.Post.objects.filter(user=user).order_by("-id")
 
-class DashboardCommentLists(generics.ListAPIView):
-    serializer_class = api_serializer.CommentSerializer
-    permission_classes = [AllowAny]
-
-    def get_queryset(self):
-        return api_models.Comment.objects.all()
 
 class DashboardNotificationLists(generics.ListAPIView):
     serializer_class = api_serializer.NotificationSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user_id = self.kwargs['user_id']
@@ -471,6 +439,7 @@ class DashboardNotificationLists(generics.ListAPIView):
         return api_models.Notification.objects.filter(seen=False, user=user)
 
 class DashboardMarkNotiSeenAPIView(APIView):
+    permission_classes = [IsAuthenticated]
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -488,35 +457,12 @@ class DashboardMarkNotiSeenAPIView(APIView):
 
         return Response({"message": "Noti Marked As Seen"}, status=status.HTTP_200_OK)
 
-class DashboardPostCommentAPIView(APIView):
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'comment_id': openapi.Schema(type=openapi.TYPE_INTEGER),
-                'reply': openapi.Schema(type=openapi.TYPE_STRING),
-            },
-        ),
-    )
-    def post(self, request):
-        comment_id = request.data['comment_id']
-        reply = request.data['reply']
-
-        print("comment_id =======", comment_id)
-        print("reply ===========", reply)
-
-        comment = api_models.Comment.objects.get(id=comment_id)
-        comment.reply = reply
-        comment.save()
-
-        return Response({"message": "Comment Response Sent"}, status=status.HTTP_201_CREATED)
     
 class DashboardPostCreateAPIView(generics.CreateAPIView):
     serializer_class = api_serializer.PostSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        print(request.data)
         user_id = request.data.get('user_id')
         title = request.data.get('title')
         image = request.data.get('image')
@@ -524,14 +470,6 @@ class DashboardPostCreateAPIView(generics.CreateAPIView):
         tags = request.data.get('tags')
         category_id = request.data.get('category')
         post_status = request.data.get('post_status')
-
-        # print(user_id)
-        # print(title)
-        # print(image)
-        # print(description)
-        # print(tags)
-        # print(category_id)
-        # print(post_status)
 
         user = api_models.User.objects.get(id=user_id)
         category = api_models.Category.objects.get(id=category_id)
@@ -550,7 +488,7 @@ class DashboardPostCreateAPIView(generics.CreateAPIView):
 
 class DashboardPostEditAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = api_serializer.PostSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
         user_id = self.kwargs['user_id']
@@ -567,14 +505,7 @@ class DashboardPostEditAPIView(generics.RetrieveUpdateDestroyAPIView):
         tags = request.data.get('tags')
         # category_id = request.data.get('category')
         post_status = request.data.get('post_status')
-
-        # print(title)
-        # print(image)
-        # print(description)
-        # print(tags)
-        # # print(category_id)
-        # # print(post_status)
-
+        
         # category = api_models.Category.objects.get(id=category_id)
 
         post_instance.title = title
@@ -589,18 +520,13 @@ class DashboardPostEditAPIView(generics.RetrieveUpdateDestroyAPIView):
         return Response({"message": "Post Updated Successfully"}, status=status.HTTP_200_OK)
 
 class DashboardPostDeleteAPIView(APIView):
-    permission_classes = [AllowAny]
-    # permission_classes = [IsAuthenticated]
-    def delete(self, request, post_id):
-        print("*************************")
-        print(post_id)
+    permission_classes = [IsAuthenticated]
+    def delete(self, request, post_id, user_id):
         post = get_object_or_404(api_models.Post, id=post_id)
-        print(post.user)
-        print(request.user)
-        # if post.user != request.user:
-        #     return Response({"error": "Unauthorized !"}, status=status.HTTP_403_FORBIDDEN)
+        if int(post.user.id) != int(user_id):
+            return Response({"error": "Unauthorized !"}, status=status.HTTP_403_FORBIDDEN)
 
-        # post.delete()
+        post.delete()
         return Response({"message": "Post deleted"}, status=status.HTTP_204_NO_CONTENT) 
             
 {

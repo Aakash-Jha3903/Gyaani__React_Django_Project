@@ -158,6 +158,8 @@ class PostSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True)
     category = serializers.StringRelatedField()  # Include category title
     bookmarks = serializers.SerializerMethodField()
+    likes = serializers.SerializerMethodField()
+    followers = serializers.SerializerMethodField()
     profile = serializers.SerializerMethodField()
 
     class Meta:
@@ -184,6 +186,10 @@ class PostSerializer(serializers.ModelSerializer):
     
     def get_bookmarks(self, obj):
         return list(obj.bookmark_set.values_list('user_id', flat=True))  # Return a list of user IDs who bookmarked the post
+    def get_likes(self, obj):
+        return list(obj.likes.values_list("id", flat=True))
+    def get_followers(self, obj):
+        return list(obj.likes.values_list("id", flat=True))
     def get_profile(self, obj):
         request = self.context.get('request')  # Get the request object
         profile = obj.user.profile if hasattr(obj.user, 'profile') else None
@@ -206,6 +212,7 @@ class FollowSerializer(serializers.ModelSerializer):
             "id": obj.following.id,
             "email": obj.following.email,
             "full_name": obj.following.full_name,
+            "following_id": obj.following.id,
             "profile": {
                 "image": obj.following.profile.image.url if obj.following.profile.image else None
             }
