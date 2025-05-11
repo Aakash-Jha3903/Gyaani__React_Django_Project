@@ -9,11 +9,13 @@ import Toast from "../../plugin/Toast";
 import useUserData from "../../plugin/useUserData";
 import '../../App.css';
 import useAxios from "../../utils/useAxios";
+import { useLocation } from 'react-router-dom';
 
 function Detail() {
     const axiosInstance = useAxios();
     const { slug } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [post, setPost] = useState([]);
     const [tags, setTags] = useState([]);
     const [createComment, setCreateComment] = useState({ full_name: "", email: "", comment: "" });
@@ -61,16 +63,17 @@ function Detail() {
         try {
             await axiosInstance.post(`/post/increment-view/${slug}/`);
         } catch (error) {
+            navigate(`/404${location.pathname}/`);
             console.error("Error incrementing view count:", error);
         }
     };
     useEffect(() => {
-        fetchPost();
         incrementViewCount();
+        fetchPost();
     }, [slug]);
     // useEffect(() => {
-        // fetchPost();
-        // incrementViewCount();
+    // fetchPost();
+    // incrementViewCount();
     // }, []);
 
     const handleFollow = async () => {
@@ -124,12 +127,16 @@ function Detail() {
     };
 
     const handleCreateCommentSubmit = async (e) => {
+        e.preventDefault();
         if (!userId) {
             Toast("error", "You need to log in to comment on a post.");
             navigate("/login/");
             return;
         }
-        e.preventDefault();
+        if (createComment.comment.trim() === "") {
+            Toast("error", "Comment cannot be empty.");
+            return;
+        }
 
         const jsonData = {
             post_id: post?.id,
@@ -397,82 +404,21 @@ function Detail() {
 
 
                             <hr />
-
-                            <div>
-                                <h3>{post.comments?.length} comments</h3>
-                                {post.comments?.map((c) =>
-                                    (c && (c.parent === null || c.parent === undefined)) && (
-                                        <div className="my-4 d-flex bg-light p-3 mb-3 rounded" key={c.id}>
-                                            <img
-                                                className="avatar avatar-md rounded-circle float-start me-3"
-                                                src="https://as1.ftcdn.net/v2/jpg/03/53/11/00/1000_F_353110097_nbpmfn9iHlxef4EDIhXB1tdTD0lcWhG9.jpg"
-                                                style={{ width: "70px", height: "70px", objectFit: "cover", borderRadius: "50%" }}
-                                                alt="avatar"
-                                            />
-                                            <div>
-                                                <div className="mb-2">
-                                                    <h5 className="m-0">{c.name}</h5>
-                                                    <span className="me-3 small">{moment(c.date).format("DD MMM, YYYY")}</span>
-                                                </div>
-                                                <p className="fw-bold comment-box">{c.comment}</p>
-
-                                                {/* Reply Icon */}
-                                                <button
-                                                    className="btn btn-link p-0 text-primary text-decoration-none "
-                                                    onClick={() => toggleReplies(c.id)}
-                                                >
-                                                    {showReplies[c.id] ? "Hide Replies" : "Show Replies"}
-                                                    <i className={`fas fa-reply ms-1`}></i>
-                                                    {/* <i className={`fas fa-${showReplies[c.id] ? "minus" : "reply"} ms-1`}></i> */}
-
-                                                </button>
-
-                                                {/* Nested Replies */}
-                                                {showReplies[c.id] && (
-                                                    <>
-                                                        {c.replies?.map((reply) => (
-                                                            <div className="bg-white p-2 mt-2 rounded reply-box" key={reply.id}>
-                                                                <h6 className="m-0">{reply.name}</h6>
-                                                                <p className="small">{reply.comment}</p>
-                                                            </div>
-                                                        ))}
-
-                                                        {/* Reply Input */}
-                                                        <div className="mt-3">
-                                                            <textarea
-                                                                className="form-control"
-                                                                rows={2}
-                                                                placeholder="Write a reply..."
-                                                                value={reply[c.id] || ""}
-                                                                onChange={(e) => handleReplyChange(c.id, e.target.value)}
-                                                            />
-                                                            <button
-                                                                className="btn btn-primary mt-2"
-                                                                onClick={() => handleReplySubmit(c.id)}
-                                                            >
-                                                                Post Reply
-                                                            </button>
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )
-                                )}
-                            </div>
-                            {/* Add a New Comment */}                            <div className="bg-light p-3 rounded">
+                            {/* Add a New Comment */}
+                            <h4>Write a comment</h4>
+                            <div className="bg-light p-3 rounded">
                                 <form className="row g-3 mt-2" onSubmit={handleCreateCommentSubmit}>
                                     <div className="col-md-6">
                                         <label className="form-label">Name *</label>
-                                        <input onChange={handleCreateCommentChange} name="full_name" value={createComment.full_name} type="text" className="form-control" aria-label="First name" />
+                                        <input onChange={handleCreateCommentChange} name="full_name" value={userName || " "} type="text" className="form-control" aria-label="First name" />
                                     </div>
                                     <div className="col-md-6">
                                         <label className="form-label">Email *</label>
-                                        <input onChange={handleCreateCommentChange} name="email" value={createComment.email} type="email" className="form-control" />
+                                        <input onChange={handleCreateCommentChange} name="email" value={userEmail || " "} type="email" className="form-control" />
                                     </div>
                                     <div className="col-12">
                                         <label className="form-label">Write Comment *</label>
-                                        <textarea onChange={handleCreateCommentChange} name="comment" value={createComment.comment} className="form-control" rows={4} />
+                                        <textarea onChange={handleCreateCommentChange} name="comment" value={createComment.comment} className="form-control" rows={3} />
                                     </div>
                                     <div className="col-12">
                                         <button type="submit" className="btn btn-primary">
@@ -481,6 +427,80 @@ function Detail() {
                                     </div>
                                 </form>
                             </div>
+                            <hr />
+                            <div>
+                                <h3>{post.comments?.length} comments</h3>
+                                <div style={{
+                                    maxHeight: "500px",
+                                    overflowY: "auto",
+                                    padding: "10px",
+                                    border: "1px solid #ddd",
+                                    borderRadius: "5px",
+                                }}
+                                >
+                                    {post.comments?.map((c) =>
+                                        (c && (c.parent === null || c.parent === undefined)) && (
+                                            <div className="my-4 d-flex bg-light p-3 mb-3 rounded" key={c.id}>
+                                                <img
+                                                    className="avatar avatar-md rounded-circle float-start me-3"
+                                                    src="https://as1.ftcdn.net/v2/jpg/03/53/11/00/1000_F_353110097_nbpmfn9iHlxef4EDIhXB1tdTD0lcWhG9.jpg"
+                                                    style={{ width: "70px", height: "70px", objectFit: "cover", borderRadius: "50%" }}
+                                                    alt="avatar"
+                                                />
+                                                <div>
+                                                    <div className="mb-2">
+                                                        <h5 className="m-0">{c.name}</h5>
+                                                        <span className="me-3 small">{moment(c.date).format("DD MMM, YYYY")}</span>
+                                                    </div>
+                                                    <p className="fw-bold comment-box">{c.comment}</p>
+
+                                                    {/* Reply Icon */}
+                                                    <button
+                                                        className="btn btn-link p-0 text-primary text-decoration-none "
+                                                        onClick={() => toggleReplies(c.id)}
+                                                    >
+                                                        {showReplies[c.id] ? "Hide Replies" : "Show Replies"}
+                                                        <i className={`fas fa-reply ms-1`}></i>
+                                                        {/* <i className={`fas fa-${showReplies[c.id] ? "minus" : "reply"} ms-1`}></i> */}
+
+                                                    </button>
+
+                                                    {/* Nested Replies */}
+                                                    {showReplies[c.id] && (
+                                                        <>
+                                                            {c.replies?.map((reply) => (
+                                                                <div className="bg-white p-2 mt-2 rounded reply-box" key={reply.id}>
+                                                                    <h6 className="m-0">{reply.name}</h6>
+                                                                    <p className="small">{reply.comment}</p>
+                                                                </div>
+                                                            ))}
+
+                                                            {/* Reply Input */}
+                                                            <div className="mt-3">
+                                                                <textarea
+                                                                    className="form-control"
+                                                                    rows={2}
+                                                                    placeholder="Write a reply..."
+                                                                    value={reply[c.id] || ""}
+                                                                    onChange={(e) => handleReplyChange(c.id, e.target.value)}
+                                                                />
+                                                                <button
+                                                                    className="btn btn-primary mt-2"
+                                                                    onClick={() => handleReplySubmit(c.id)}
+                                                                >
+                                                                    Post Reply
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                                <hr />
+                            </div>
+
                         </div>
                     </div>
                 </div>

@@ -25,6 +25,7 @@ import React from "react";
 
 import MainWrapper from "../src/layouts/MainWrapper";
 import PrivateRoute from "./layouts/PrivateRoute";
+import NotFound from "./views/core/NotFound";
 function App() {
     return (
         <>
@@ -61,6 +62,7 @@ function App() {
                         {/* Pages */}
                         <Route path="/about/" element={<About />} />
                         <Route path="/contact/" element={<Contact />} />
+                        <Route path="*" element={<NotFound />} />{/* Add the 404 route */}
                     </Routes>
                 </MainWrapper>
             </BrowserRouter>
